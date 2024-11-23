@@ -80,4 +80,34 @@ class Get {
       );
     }
   }
+
+  public function getCurrentUser() {
+    if (!isset($_SESSION['user_id'])) {
+      return array(
+        "error" => "Not authenticated",
+        "code" => 401
+      );
+    }
+
+    $sqlString = "SELECT id, username, email, full_name FROM users WHERE id = ?";
+    try {
+      $stmt = $this->pdo->prepare($sqlString);
+      $stmt->execute([$_SESSION['user_id']]);
+      $user = $stmt->fetch();
+      
+      if (!$user) {
+        return array(
+          "error" => "User not found",
+          "code" => 404
+        );
+      }
+      
+      return $user;
+    } catch (\Throwable $th) {
+      return array(
+        "error" => $th->getMessage(),
+        "code" => 500
+      );
+    }
+  }
 }

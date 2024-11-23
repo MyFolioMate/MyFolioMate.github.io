@@ -66,6 +66,10 @@ class Auth {
         );
       }
 
+      // Start session and store user ID
+      session_start();
+      $_SESSION['user_id'] = $user['id'];
+
       // Remove password from response
       unset($user['password']);
       return array(

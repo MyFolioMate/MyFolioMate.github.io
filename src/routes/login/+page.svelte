@@ -22,9 +22,7 @@
         throw new Error(data.error);
       }
 
-      // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify(data.user));
-      // goto(`/${data.user.username}`);
+      // Redirect to profile page after successful login
       goto('/profile');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Login failed';

@@ -38,6 +38,14 @@
           case 'explore':
             echo json_encode($get->getAllPortfolios());
           break;
+          case 'user':
+            $user = $get->getCurrentUser();
+            echo json_encode($user);
+          break;
+          case 'logout':
+            session_destroy();
+            echo json_encode(["success" => true]);
+          break;
           default:
             echo json_encode(["error" => "No public API available"]);
         }

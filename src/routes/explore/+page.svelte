@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
 
   // Example portfolios (keeping these as fallback)
   let examplePortfolios = [
@@ -35,7 +36,6 @@
       const data = await response.json();
       
       if (data.success) {
-        // Combine real portfolios with examples
         portfolios = [...examplePortfolios, ...data.portfolios.map((p: {
           user_id: number;
           username: string;
@@ -64,20 +64,22 @@
   }
 
   async function handleLike(portfolioId: number) {
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) {
-      window.location.href = '/login';
-      return;
-    }
-
     try {
+      // Check authentication status from server
+      const userResponse = await fetch('/api/user');
+      const userData = await userResponse.json();
+      
+      if (userData.error) {
+        goto('/login');
+        return;
+      }
+
       const response = await fetch('/api/togglelike', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          user_id: user.id,
           portfolio_id: portfolioId
         })
       });
