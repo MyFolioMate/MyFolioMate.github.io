@@ -83,19 +83,19 @@
             <div class="space-y-6">
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <a
-                  href={`/${user?.username}-${user?.id}`}
+                  href={`/${user?.username}`}
                   class="inline-flex justify-center items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
                 >
                   View Portfolio
                 </a>
                 <a
-                  href={`/${user?.username}-${user?.id}/edit`}
+                  href={`/${user?.username}/edit`}
                   class="inline-flex justify-center items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Edit Portfolio
                 </a>
                 <a
-                  href={`/${user?.username}-${user?.id}/projects`}
+                  href={`/${user?.username}/projects`}
                   class="inline-flex justify-center items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
                 >
                   Manage Projects
@@ -136,7 +136,7 @@
             <div class="text-center">
               <p class="text-gray-600 mb-4">You haven't created a portfolio yet.</p>
               <a
-                href={`/${user?.username}-${user?.id}/edit`}
+                href={`/${user?.username}/edit`}
                 class="inline-flex justify-center items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 Create Portfolio
