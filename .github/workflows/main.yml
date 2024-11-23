@@ -26,12 +26,14 @@ jobs:
        run: npm install
 
      - name: Build SvelteKit app
-       run: npm run build
-       
+       run: |
+         npm run build
+         cp build/404.html build/index.html
+
      - name: Upload artifact
        uses: actions/upload-pages-artifact@v1
        with:
-         path: 'build/'
+         path: 'build'
 
      - name: Deploy to GitHub Pages
        uses: actions/deploy-pages@v2
