@@ -28,6 +28,7 @@ jobs:
      - name: Build SvelteKit app
        run: |
          npm run build
+         touch build/.nojekyll
          cp build/404.html build/index.html
 
      - name: Upload artifact
