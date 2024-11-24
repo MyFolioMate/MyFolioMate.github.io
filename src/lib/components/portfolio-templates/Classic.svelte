@@ -6,13 +6,22 @@
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-4xl mx-auto">
       <header class="mb-12 text-center">
-        <h1 class="text-5xl font-bold mb-4">{portfolio.title || 'My Portfolio'}</h1>
+        <h1 class="text-5xl font-bold mb-4" style="color: {portfolio.theme_color}">
+          {portfolio.title || 'My Portfolio'}
+        </h1>
         <p class="text-xl text-gray-600 mb-6">{portfolio.about}</p>
         {#if portfolio.social_links}
           <div class="flex justify-center space-x-4">
             {#each portfolio.social_links.split(',') as link}
-              <a href={link.trim()} target="_blank" class="text-blue-600 hover:text-blue-800">
-                <!-- Add social icons -->
+              <a 
+                href={link.trim()} 
+                target="_blank" 
+                class="text-blue-600 hover:text-blue-800"
+                style="color: {portfolio.theme_color}"
+              >
+                {link.includes('linkedin') ? 'LinkedIn' : 
+                 link.includes('github') ? 'GitHub' : 
+                 link.includes('twitter') ? 'Twitter' : 'Link'}
               </a>
             {/each}
           </div>
@@ -21,42 +30,36 @@
   
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <section class="bg-gray-50 p-8 rounded-lg">
-          <h2 class="text-2xl font-bold mb-6">Experience</h2>
+          <h2 class="text-2xl font-bold mb-6" style="color: {portfolio.theme_color}">Education</h2>
           <div class="prose">
-            {@html portfolio.experience || 'No experience listed yet.'}
+            {@html portfolio.education || 'No education listed yet.'}
           </div>
         </section>
   
         <section class="bg-gray-50 p-8 rounded-lg">
-          <h2 class="text-2xl font-bold mb-6">Education</h2>
+          <h2 class="text-2xl font-bold mb-6" style="color: {portfolio.theme_color}">Achievements</h2>
           <div class="prose">
-            {@html portfolio.education || 'No education listed yet.'}
+            {@html portfolio.achievements || 'No achievements listed yet.'}
           </div>
         </section>
       </div>
   
       <section class="mb-12">
-        <h2 class="text-2xl font-bold mb-6">Skills</h2>
+        <h2 class="text-2xl font-bold mb-6" style="color: {portfolio.theme_color}">Skills</h2>
         <div class="flex flex-wrap gap-3">
-          {#if portfolio.skills}
-            {#each portfolio.skills.split(',') as skill}
-              <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full">
-                {skill}
-              </span>
-            {/each}
-          {/if}
+          {#each portfolio.skills as skill}
+            <span 
+              class="px-4 py-2 rounded-full text-white"
+              style="background-color: {portfolio.theme_color}"
+            >
+              {skill}
+            </span>
+          {/each}
         </div>
       </section>
   
       <section class="mb-12">
-        <h2 class="text-2xl font-bold mb-6">Achievements</h2>
-        <div class="prose max-w-none">
-          {@html portfolio.achievements || 'No achievements listed yet.'}
-        </div>
-      </section>
-  
-      <section class="mb-12">
-        <h2 class="text-2xl font-bold mb-6">Featured Projects</h2>
+        <h2 class="text-2xl font-bold mb-6" style="color: {portfolio.theme_color}">Featured Projects</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {#each projects as project}
             <div class="border rounded-lg p-6 hover:shadow-lg transition-all duration-300">
@@ -65,7 +68,8 @@
               <a 
                 href={project.project_url} 
                 target="_blank" 
-                class="inline-flex items-center text-blue-600 hover:text-blue-800"
+                class="inline-flex items-center hover:opacity-80 transition-opacity"
+                style="color: {portfolio.theme_color}"
               >
                 View Project
                 <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +82,7 @@
       </section>
   
       <section class="bg-gray-50 p-8 rounded-lg">
-        <h2 class="text-2xl font-bold mb-6">Contact</h2>
+        <h2 class="text-2xl font-bold mb-6" style="color: {portfolio.theme_color}">Contact</h2>
         <div class="prose max-w-none">
           {@html portfolio.contact_info}
         </div>

@@ -3,15 +3,17 @@
   export let projects;
 </script>
 
-<div class="min-h-screen bg-gray-50">
+<style>
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+  }
+</style>
+
+<main class="min-h-screen bg-gray-50">
   <div class="bg-white shadow-sm">
     <div class="max-w-7xl mx-auto px-4 py-6">
-    </div>
-  </div>
-
-  <div class="max-w-7xl mx-auto px-4 py-12">
-    <div class="bg-white shadow-xl rounded-lg overflow-hidden">
-      <!-- Hero Section -->
       <div class="px-8 py-16 border-b relative" style="background-color: {portfolio.theme_color}05">
         <div class="max-w-3xl">
           <h1 class="text-4xl font-semibold mb-6" style="color: {portfolio.theme_color}">
@@ -21,8 +23,15 @@
           {#if portfolio.social_links}
             <div class="flex space-x-4">
               {#each portfolio.social_links.split(',') as link}
-                <a href={link.trim()} target="_blank" class="text-gray-600 hover:text-gray-900">
-                  <!-- Add social icons -->
+                <a 
+                  href={link.trim()} 
+                  target="_blank" 
+                  class="text-gray-600 hover:text-gray-900 transition-colors"
+                  style="color: {portfolio.theme_color}"
+                >
+                  {link.includes('linkedin') ? 'LinkedIn' : 
+                   link.includes('github') ? 'GitHub' : 
+                   link.includes('twitter') ? 'Twitter' : 'Link'}
                 </a>
               {/each}
             </div>
@@ -31,17 +40,8 @@
       </div>
 
       <div class="px-8 py-12">
-        <!-- Experience & Education -->
+        <!-- Education & Skills -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          <section class="bg-gray-50 p-8 rounded-lg">
-            <h2 class="text-2xl font-semibold mb-6" style="color: {portfolio.theme_color}">
-              Professional Experience
-            </h2>
-            <div class="prose">
-              {@html portfolio.experience || 'No experience listed yet.'}
-            </div>
-          </section>
-
           <section class="bg-gray-50 p-8 rounded-lg">
             <h2 class="text-2xl font-semibold mb-6" style="color: {portfolio.theme_color}">
               Education & Certifications
@@ -50,21 +50,25 @@
               {@html portfolio.education || 'No education listed yet.'}
             </div>
           </section>
-        </div>
 
-        <!-- Skills -->
-        <section class="mb-12">
-          <h2 class="text-2xl font-semibold mb-6" style="color: {portfolio.theme_color}">Core Competencies</h2>
-          <div class="flex flex-wrap gap-3">
-            {#if portfolio.skills}
-              {#each portfolio.skills.split(',') as skill}
-                <span class="px-4 py-2 rounded-md text-gray-700 bg-gray-100 border border-gray-200">
-                  {skill}
-                </span>
-              {/each}
-            {/if}
-          </div>
-        </section>
+          <section class="bg-gray-50 p-8 rounded-lg">
+            <h2 class="text-2xl font-semibold mb-6" style="color: {portfolio.theme_color}">
+              Core Competencies
+            </h2>
+            <div class="flex flex-wrap gap-3">
+              {#if portfolio.skills}
+                {#each portfolio.skills as skill}
+                  <span 
+                    class="px-4 py-2 rounded-md text-white transition-colors"
+                    style="background-color: {portfolio.theme_color}"
+                  >
+                    {skill}
+                  </span>
+                {/each}
+              {/if}
+            </div>
+          </section>
+        </div>
 
         <!-- Projects -->
         <section class="mb-12">
@@ -77,7 +81,8 @@
                 <a 
                   href={project.project_url} 
                   target="_blank" 
-                  class="inline-flex items-center text-gray-700 hover:text-gray-900"
+                  class="inline-flex items-center transition-colors"
+                  style="color: {portfolio.theme_color}"
                 >
                   View Details
                   <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,4 +112,4 @@
       </div>
     </div>
   </div>
-</div> 
+</main> 

@@ -66,15 +66,12 @@ class Auth {
         );
       }
 
-      // Start session and store user ID
-      session_start();
-      $_SESSION['user_id'] = $user['id'];
-
-      // Remove password from response
-      unset($user['password']);
       return array(
         "success" => true,
-        "user" => $user
+        "id" => $user['id'],
+        "username" => $user['username'],
+        "email" => $user['email'],
+        "full_name" => $user['full_name']
       );
     } catch (\Throwable $th) {
       return array(

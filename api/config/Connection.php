@@ -1,21 +1,22 @@
 <?php
- header("Access-Control-Allow-Origin: *");
- header("Context-Type: application/json; charset=utf-8");
- header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
- header('Access-Control-Allow-Headers: Content-Type, Accept');
- date_default_timezone_set("Asia/Manila");
- set_time_limit(1000);
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Credentials: true");
+header("Content-Type: application/json; charset=utf-8");
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Accept');
+date_default_timezone_set("Asia/Manila");
+set_time_limit(1000);
 
- if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
- define("SERVER", "localhost");
-  define("DBASE", "myfolio_db");
-  define("USER", "root");
-  define("PASSWORD", "");
+define("SERVER", "localhost");
+define("DBASE", "myfolio_db");
+define("USER", "root");
+define("PASSWORD", "");
 
-  class Connection {
+class Connection {
     private $conString = "mysql:host=".SERVER.";dbname=".DBASE.";charset=utf8mb4";
     private $options = [
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
@@ -25,12 +26,12 @@
     ];
 
     public function connect() {
-      $conn = false;
-      try {
-          $conn = new \PDO($this->conString, USER, PASSWORD, $this->options);
-      } catch (\Throwable $th) {
-          echo "Connection error: " . $th->getMessage();//throw $th;
-      }
-      return $conn;
-  }
+        $conn = false;
+        try {
+            $conn = new \PDO($this->conString, USER, PASSWORD, $this->options);
+        } catch (\Throwable $th) {
+            echo "Connection error: " . $th->getMessage();//throw $th;
+        }
+        return $conn;
+    }
 }

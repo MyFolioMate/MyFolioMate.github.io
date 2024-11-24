@@ -5,9 +5,9 @@
 
 <div class="min-h-screen bg-white">
   <div class="max-w-4xl mx-auto px-4 py-20">
-
-
-    <h1 class="text-6xl font-light mb-16 tracking-tight">{portfolio.title || 'My Portfolio'}</h1>
+    <h1 class="text-6xl font-light mb-16 tracking-tight" style="color: {portfolio.theme_color}">
+      {portfolio.title || 'My Portfolio'}
+    </h1>
     
     <div class="space-y-32">
       <!-- About -->
@@ -16,25 +16,24 @@
         {#if portfolio.social_links}
           <div class="flex space-x-6 mt-8">
             {#each portfolio.social_links.split(',') as link}
-              <a href={link.trim()} target="_blank" class="text-gray-400 hover:text-gray-800 transition-colors">
-                <!-- Add social icons -->
+              <a 
+                href={link.trim()} 
+                target="_blank" 
+                class="text-gray-400 hover:text-gray-800 transition-colors"
+                style="color: {portfolio.theme_color}"
+              >
+                {link.includes('linkedin') ? 'LinkedIn' : 
+                 link.includes('github') ? 'GitHub' : 
+                 link.includes('twitter') ? 'Twitter' : 'Link'}
               </a>
             {/each}
           </div>
         {/if}
       </section>
 
-      <!-- Experience -->
-      <section>
-        <h2 class="text-2xl font-light mb-8">Experience</h2>
-        <div class="prose prose-gray max-w-2xl">
-          {@html portfolio.experience || 'No experience listed yet.'}
-        </div>
-      </section>
-
       <!-- Education -->
       <section>
-        <h2 class="text-2xl font-light mb-8">Education</h2>
+        <h2 class="text-2xl font-light mb-8" style="color: {portfolio.theme_color}">Education</h2>
         <div class="prose prose-gray max-w-2xl">
           {@html portfolio.education || 'No education listed yet.'}
         </div>
@@ -42,11 +41,14 @@
 
       <!-- Skills -->
       <section>
-        <h2 class="text-2xl font-light mb-8">Skills</h2>
+        <h2 class="text-2xl font-light mb-8" style="color: {portfolio.theme_color}">Skills</h2>
         <div class="flex flex-wrap gap-4">
           {#if portfolio.skills}
-            {#each portfolio.skills.split(',') as skill}
-              <span class="px-4 py-2 border border-gray-200 rounded-sm text-sm">
+            {#each portfolio.skills as skill}
+              <span 
+                class="px-4 py-2 border rounded-sm text-sm transition-colors"
+                style="border-color: {portfolio.theme_color}; color: {portfolio.theme_color}"
+              >
                 {skill}
               </span>
             {/each}
@@ -56,7 +58,7 @@
 
       <!-- Achievements -->
       <section>
-        <h2 class="text-2xl font-light mb-8">Achievements</h2>
+        <h2 class="text-2xl font-light mb-8" style="color: {portfolio.theme_color}">Achievements</h2>
         <div class="prose prose-gray max-w-2xl">
           {@html portfolio.achievements || 'No achievements listed yet.'}
         </div>
@@ -64,7 +66,7 @@
 
       <!-- Projects -->
       <section>
-        <h2 class="text-2xl font-light mb-12">Projects</h2>
+        <h2 class="text-2xl font-light mb-12" style="color: {portfolio.theme_color}">Projects</h2>
         <div class="space-y-16">
           {#each projects as project}
             <div class="group">
@@ -73,7 +75,8 @@
               <a 
                 href={project.project_url} 
                 target="_blank" 
-                class="text-sm text-gray-500 hover:text-black transition-colors"
+                class="text-sm transition-colors"
+                style="color: {portfolio.theme_color}"
               >
                 View Project →
               </a>
@@ -84,8 +87,10 @@
 
       <!-- Contact -->
       <section>
-        <h2 class="text-2xl font-light mb-8">Contact</h2>
-        <div class="text-gray-600 max-w-2xl">{portfolio.contact_info}</div>
+        <h2 class="text-2xl font-light mb-8" style="color: {portfolio.theme_color}">Contact</h2>
+        <div class="prose prose-gray max-w-2xl">
+          {@html portfolio.contact_info}
+        </div>
       </section>
     </div>
   </div>
