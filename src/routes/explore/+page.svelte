@@ -156,10 +156,10 @@
                   </div>
                 </button>
               </div>
-              <div class="flex justify-between items-center">z
+              <div class="flex justify-between items-center">
                 <span class="text-sm text-blue-500">{portfolio.template}</span>
                 <a
-                  href={`/${portfolio.username}-${portfolio.id}`}
+                  href={`/${portfolio.username}/${portfolio.id}`}
                   class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
                 >
                   View Portfolio

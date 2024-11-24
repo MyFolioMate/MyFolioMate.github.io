@@ -127,7 +127,7 @@
               {#if portfolio}
                 <div class="space-x-4">
                   <a 
-                    href="/{user.username}" 
+                    href="/{user.username}/{user.id}" 
                     target="_blank"
                     class="inline-block px-4 py-2 text-blue-600 hover:text-blue-800"
                   >
@@ -137,7 +137,7 @@
                     href="/{user.username}/edit" 
                     class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
-                    Edit Portfolio
+                    Manage Portfolio
                   </a>
                 </div>
               {:else}

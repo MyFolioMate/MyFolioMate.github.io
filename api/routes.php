@@ -27,16 +27,42 @@ try {
   switch($_SERVER['REQUEST_METHOD']) {
     case 'GET':
       switch($req[0]) {
-        // case 'getstudents':
-        //   echo json_encode($get->getStudents($req[1] ?? null));
-        //   break;
         case 'portfolio':
-          echo json_encode($get->getPortfolio($req[1]));
-        break;
+          $username = $req[1] ?? null;
+          $userId = $req[2] ?? null;
+          if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Handle portfolio update
+            $data = json_decode(file_get_contents("php://input"));
+            if ($userId && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $userId) {
+              echo json_encode($post->updatePortfolio($data));
+            } else {
+              echo json_encode([
+                "success" => false,
+                "error" => "Unauthorized",
+                "code" => 401
+              ]);
+            }
+          } else {
+            // Get portfolio
+            echo json_encode($get->getPortfolio($username, $userId));
+          }
+          break;
         
         case 'projects':
-          echo json_encode($get->getProjects($req[1]));
-        break;
+          $username = $req[1] ?? null;
+          $userId = $req[2] ?? null;
+          
+          if (!$username) {
+              echo json_encode([
+                  "success" => false,
+                  "error" => "Username is required",
+                  "code" => 400
+              ]);
+              break;
+          }
+          
+          echo json_encode($get->getProjects($username, $userId));
+          break;
         case 'explore':
           echo json_encode($get->getAllPortfolios());
         break;

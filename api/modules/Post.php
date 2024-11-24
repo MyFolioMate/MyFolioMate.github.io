@@ -195,4 +195,27 @@ class Post {
       );
     }
   }
+
+  public function updateProject($param) {
+    $sqlString = "UPDATE projects 
+                  SET title = ?, description = ?, project_url = ? 
+                  WHERE id = ? AND user_id = ?";
+    try {
+      $stmt = $this->pdo->prepare($sqlString);
+      $stmt->execute([
+        $param->title,
+        $param->description,
+        $param->project_url,
+        $param->project_id,
+        $param->user_id
+      ]);
+      return ["success" => true, "message" => "Project updated successfully"];
+    } catch (\Throwable $th) {
+      return [
+        "success" => false,
+        "error" => $th->getMessage(),
+        "code" => $th->getCode()
+      ];
+    }
+  }
 }

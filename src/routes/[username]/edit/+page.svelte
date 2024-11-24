@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
 
   const username = $page.params.username;
+  const id = $page.params.id;
   let error: string | null = null;
   let success: string | null = null;
   let loading = true;
@@ -19,6 +20,18 @@
   let education = '';
   let achievements = '';
   let social_links = '';
+  
+  // Add these to the existing script section
+  let projects: any[] = [];
+  let projectTitle = '';
+  let projectDescription = '';
+  let projectUrl = '';
+  
+  // Add these with the other project-related variables
+  let editingProject: number | null = null;
+  let editProjectTitle = '';
+  let editProjectDescription = '';
+  let editProjectUrl = '';
   
   onMount(async () => {
     try {
@@ -61,6 +74,13 @@
         achievements = data.achievements || '';
         social_links = data.social_links || '';
       }
+
+      // Add this to the onMount function after loading portfolio data
+      const projectsRes = await fetch(`/api/projects/${username}`);
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json();
+        projects = projectsData.success ? projectsData.data : [];
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load portfolio';
     } finally {
@@ -100,6 +120,162 @@
       success = 'Portfolio updated successfully';
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to update portfolio';
+    }
+  }
+
+  async function handleProjectSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    error = null;
+    success = null;
+
+    try {
+      const response = await fetch('/api/addproject', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          title: projectTitle,
+          description: projectDescription,
+          project_url: projectUrl,
+          image_url: '' // Optional
+        })
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+
+      success = 'Project added successfully';
+      projectTitle = '';
+      projectDescription = '';
+      projectUrl = '';
+      
+      // Reload projects
+      const projectsRes = await fetch(`/api/projects/${username}`);
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json();
+        projects = projectsData.success ? projectsData.data : [];
+      }
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to add project';
+    }
+  }
+
+  async function deleteProject(projectId: number) {
+    if (!confirm('Are you sure you want to delete this project?')) return;
+
+    try {
+      const response = await fetch(`/api/projects/${user.id}/${username}/${projectId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+
+      // Reload projects
+      const projectsRes = await fetch(`/api/projects/${username}`);
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json();
+        projects = projectsData.success ? projectsData.data : [];
+      }
+      success = 'Project deleted successfully';
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to delete project';
+    }
+  }
+
+  async function handleAddProject(e: Event) {
+    e.preventDefault();
+    error = null;
+    success = null;
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: projectTitle,
+          description: projectDescription,
+          project_url: projectUrl,
+          image_url: '' // Optional, add if you want to support images
+        })
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to add project');
+      }
+
+      // Clear form and show success message
+      projectTitle = '';
+      projectDescription = '';
+      projectUrl = '';
+      success = 'Project added successfully';
+      
+      // Reload projects
+      const projectsRes = await fetch(`/api/projects/${username}`);
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json();
+        projects = projectsData.success ? projectsData.data : [];
+      }
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to add project';
+    }
+  }
+
+  // Add this function to handle editing
+  function startEditing(project: any) {
+    editingProject = project.id;
+    editProjectTitle = project.title;
+    editProjectDescription = project.description;
+    editProjectUrl = project.project_url;
+  }
+
+  function cancelEditing() {
+    editingProject = null;
+  }
+
+  async function handleEditProject(projectId: number) {
+    error = null;
+    success = null;
+
+    try {
+      const response = await fetch(`/api/projects/${user.id}/${username}/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: editProjectTitle,
+          description: editProjectDescription,
+          project_url: editProjectUrl
+        })
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+
+      // Reset editing state
+      editingProject = null;
+      success = 'Project updated successfully';
+      
+      // Reload projects
+      const projectsRes = await fetch(`/api/projects/${username}`);
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json();
+        projects = projectsData.success ? projectsData.data : [];
+      }
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to update project';
     }
   }
 </script>
@@ -254,5 +430,146 @@
         </button>
       </div>
     </form>
+
+    <div class="mt-12 border-t pt-8">
+      <h2 class="text-2xl font-bold mb-6">Manage Projects</h2>
+      
+      <!-- Add Project Form -->
+      <div class="bg-gray-50 p-6 rounded-lg mb-8">
+        <h3 class="text-lg font-semibold mb-4">Add New Project</h3>
+        <form on:submit={handleProjectSubmit} class="space-y-4">
+          <div>
+            <label for="projectTitle" class="block text-sm font-medium text-gray-700">Title</label>
+            <input
+              id="projectTitle"
+              type="text"
+              bind:value={projectTitle}
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+
+          <div>
+            <label for="projectDescription" class="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              id="projectDescription"
+              bind:value={projectDescription}
+              required
+              rows="3"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="projectUrl" class="block text-sm font-medium text-gray-700">Project URL</label>
+            <input
+              id="projectUrl"
+              type="url"
+              bind:value={projectUrl}
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Add Project
+          </button>
+        </form>
+      </div>
+
+      <!-- Projects List -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Current Projects</h3>
+        <div class="space-y-4">
+          {#each projects as project}
+            <div class="border rounded-lg p-4">
+              {#if editingProject === project.id}
+                <!-- Edit Form -->
+                <form on:submit|preventDefault={() => handleEditProject(project.id)} class="space-y-4">
+                  <div>
+                    <label for="editTitle" class="block text-sm font-medium text-gray-700">Title</label>
+                    <input
+                      id="editTitle"
+                      type="text"
+                      bind:value={editProjectTitle}
+                      required
+                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="editDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea
+                      id="editDescription"
+                      bind:value={editProjectDescription}
+                      required
+                      rows="3"
+                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label for="editUrl" class="block text-sm font-medium text-gray-700">Project URL</label>
+                    <input
+                      id="editUrl"
+                      type="url"
+                      bind:value={editProjectUrl}
+                      required
+                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+
+                  <div class="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      on:click={cancelEditing}
+                      class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              {:else}
+                <!-- Project Display -->
+                <h4 class="text-lg font-medium mb-2">{project.title}</h4>
+                <p class="text-gray-600 mb-4">{project.description}</p>
+                <div class="flex justify-between items-center">
+                  <div class="space-x-4">
+                    <a 
+                      href={project.project_url} 
+                      target="_blank" 
+                      class="text-blue-600 hover:text-blue-800"
+                    >
+                      View Project
+                    </a>
+                    <button
+                      on:click={() => startEditing(project)}
+                      class="text-blue-600 hover:text-blue-800"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                  <button
+                    on:click={() => deleteProject(project.id)}
+                    class="text-red-600 hover:text-red-800"
+                  >
+                    Delete
+                  </button>
+                </div>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      </div>
+    </div>
   </div>
 {/if}

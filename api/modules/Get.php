@@ -6,7 +6,7 @@ class Get {
     $this->pdo = $pdo;
   }
 
-  public function getPortfolio($username) {
+  public function getPortfolio($username, $userId = null) {
     if (!$username) {
       return array(
         "success" => false,
@@ -16,9 +16,17 @@ class Get {
     }
 
     try {
-      // First check if user exists
-      $userCheck = $this->pdo->prepare("SELECT id, username, full_name, email FROM users WHERE username = ?");
-      $userCheck->execute([$username]);
+      // First check if user exists with both username and id if provided
+      $sql = "SELECT id, username, full_name, email FROM users WHERE username = ?";
+      $params = [$username];
+      
+      if ($userId) {
+        $sql .= " AND id = ?";
+        $params[] = $userId;
+      }
+      
+      $userCheck = $this->pdo->prepare($sql);
+      $userCheck->execute($params);
       $user = $userCheck->fetch(\PDO::FETCH_ASSOC);
 
       if (!$user) {
@@ -29,61 +37,60 @@ class Get {
         );
       }
 
-      // Then get portfolio data
-      $sqlString = "SELECT p.id as portfolio_id, p.title, p.about, p.skills, 
-                          p.contact_info, p.theme_color, p.design_template,
-                          p.education, p.achievements, p.social_links
-                   FROM portfolios p 
-                   WHERE p.user_id = ?";
-      
-      $stmt = $this->pdo->prepare($sqlString);
+      // Get portfolio data
+      $stmt = $this->pdo->prepare("SELECT * FROM portfolios WHERE user_id = ?");
       $stmt->execute([$user['id']]);
       $portfolio = $stmt->fetch(\PDO::FETCH_ASSOC);
-      
-      // Initialize portfolio data with user info and default values
-      $portfolioData = [
-        'user_id' => $user['id'],
-        'username' => $user['username'],
-        'full_name' => $user['full_name'],
-        'email' => $user['email'],
-        'title' => $portfolio ? ($portfolio['title'] ?? 'My Portfolio') : 'My Portfolio',
-        'about' => $portfolio ? ($portfolio['about'] ?? 'Welcome to my portfolio') : 'Welcome to my portfolio',
-        'skills' => $portfolio && $portfolio['skills'] ? array_map('trim', explode(',', $portfolio['skills'])) : [],
-        'contact_info' => $portfolio ? ($portfolio['contact_info'] ?? '') : '',
-        'theme_color' => $portfolio ? ($portfolio['theme_color'] ?? '#000000') : '#000000',
-        'design_template' => $portfolio ? ($portfolio['design_template'] ?? 'classic') : 'classic',
-        'education' => $portfolio ? ($portfolio['education'] ?? '') : '',
-        'achievements' => $portfolio ? ($portfolio['achievements'] ?? '') : '',
-        'social_links' => $portfolio ? ($portfolio['social_links'] ?? '') : ''
-      ];
-      
+
+      if (!$portfolio) {
+        return array(
+          "success" => false,
+          "error" => "Portfolio not found",
+          "code" => 404
+        );
+      }
+
       return array(
         "success" => true,
-        "data" => $portfolioData
+        "data" => array_merge($portfolio, ['user' => $user])
       );
     } catch (\Throwable $th) {
       return array(
         "success" => false,
-        "error" => "Unable to fetch portfolio: " . $th->getMessage(),
+        "error" => $th->getMessage(),
         "code" => 500
       );
     }
   }
 
-  public function getProjects($username) {
-    $sqlString = "SELECT p.* 
+  public function getProjects($username, $userId = null) {
+    $sqlString = "SELECT p.id, p.title, p.description, p.project_url, p.image_url, p.created_at 
                   FROM projects p
                   JOIN users u ON u.id = p.user_id
-                  WHERE u.username = ? 
-                  ORDER BY p.created_at DESC";
+                  WHERE u.username = ?";
+    $params = [$username];
+    
+    if ($userId !== null) {
+        $sqlString .= " AND p.user_id = ?";
+        $params[] = $userId;
+    }
+    
+    $sqlString .= " ORDER BY p.created_at DESC";
+    
     try {
         $stmt = $this->pdo->prepare($sqlString);
-        $stmt->execute([$username]);
-        return $stmt->fetchAll();
+        $stmt->execute($params);
+        $projects = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        return array(
+            "success" => true,
+            "data" => $projects
+        );
     } catch (\Throwable $th) {
         return array(
+            "success" => false,
             "error" => "Unable to fetch projects: " . $th->getMessage(),
-            "code" => $th->getCode()
+            "code" => 500
         );
     }
   }

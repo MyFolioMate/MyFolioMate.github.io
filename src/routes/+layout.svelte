@@ -15,6 +15,8 @@
 	                 $page.url.pathname.startsWith('/contact') ||
 	                 $page.url.pathname.startsWith('/privacy') ||
 	                 $page.url.pathname.startsWith('/pricing') ||
+                   $page.url.pathname.startsWith('/login') ||
+                   $page.url.pathname.startsWith('/register') ||
 	                 $page.url.pathname.endsWith('/edit');
 </script>
 
