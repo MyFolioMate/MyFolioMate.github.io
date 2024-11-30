@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
+    import { fetchApi } from '$lib/api';
     import { 
       Classic, 
       Modern, 
@@ -24,40 +25,30 @@
   
     onMount(async () => {
       try {
-        const portfolioRes = await fetch(`/api/portfolio/${username}/${id}`, {
+        const portfolioData = await fetchApi(`/api/portfolio/${username}/${id}`, {
           credentials: 'include'
         });
         
-        if (!portfolioRes.ok) {
-          if (portfolioRes.status === 404) {
-            throw new Error('Portfolio not found');
-          }
-          throw new Error('Failed to fetch portfolio');
-        }
-        
-        const data = await portfolioRes.json();
-        
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch portfolio data');
+        if (!portfolioData.success) {
+          throw new Error(portfolioData.error || 'Failed to fetch portfolio data');
         }
         
         portfolio = {
-          ...data.data,
-          title: data.data.title || 'My Portfolio',
-          about: data.data.about || 'Welcome to my portfolio',
-          skills: Array.isArray(data.data.skills) ? data.data.skills : [],
-          contact_info: data.data.contact_info || 'Email: ',
-          theme_color: data.data.theme_color || '#000000',
-          design_template: data.data.design_template || 'classic',
-          education: data.data.education || '',
-          achievements: data.data.achievements || '',
-          social_links: data.data.social_links || ''
+          ...portfolioData.data,
+          title: portfolioData.data.title || 'My Portfolio',
+          about: portfolioData.data.about || 'Welcome to my portfolio',
+          skills: Array.isArray(portfolioData.data.skills) ? portfolioData.data.skills : [],
+          contact_info: portfolioData.data.contact_info || 'Email: ',
+          theme_color: portfolioData.data.theme_color || '#000000',
+          design_template: portfolioData.data.design_template || 'classic',
+          education: portfolioData.data.education || '',
+          achievements: portfolioData.data.achievements || '',
+          social_links: portfolioData.data.social_links || ''
         };
   
-        const projectsRes = await fetch(`/api/projects/${username}/${id}`);
-        if (projectsRes.ok) {
-          const projectsData = await projectsRes.json();
-          projects = projectsData.success ? projectsData.data : [];
+        const projectsData = await fetchApi(`/api/projects/${username}/${id}`);
+        if (projectsData.success) {
+          projects = projectsData.data;
         }
       } catch (e) {
         error = e instanceof Error ? e.message : 'Failed to load portfolio';

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { fetchApi } from '$lib/api';
   
   let email = '';
   let password = '';
@@ -8,22 +9,16 @@
   async function handleLogin(e: SubmitEvent) {
     e.preventDefault();
     try {
-      const response = await fetch('/api/login', {
+      const data = await fetchApi('/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ email, password }),
         credentials: 'include'
       });
-
-      const data = await response.json();
 
       if (data.error) {
         throw new Error(data.error);
       }
 
-      // Redirect to profile page after successful login
       goto('/profile');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Login failed';

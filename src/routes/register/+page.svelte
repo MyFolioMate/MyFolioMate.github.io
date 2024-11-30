@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { fetchApi } from '$lib/api';
   
   let username = '';
   let email = '';
@@ -10,11 +11,8 @@
   async function handleRegister(e: SubmitEvent) {
     e.preventDefault();
     try {
-      const response = await fetch('/api/register', {
+      const data = await fetchApi('/api/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           username,
           email,
@@ -23,13 +21,10 @@
         })
       });
 
-      const data = await response.json();
-
       if (!data.success) {
         throw new Error(data.error);
       }
 
-      // Redirect to login after successful registration
       goto('/login');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Registration failed';

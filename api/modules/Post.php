@@ -201,21 +201,45 @@ class Post {
                   SET title = ?, description = ?, project_url = ? 
                   WHERE id = ? AND user_id = ?";
     try {
-      $stmt = $this->pdo->prepare($sqlString);
-      $stmt->execute([
-        $param->title,
-        $param->description,
-        $param->project_url,
-        $param->project_id,
-        $param->user_id
-      ]);
-      return ["success" => true, "message" => "Project updated successfully"];
+        $stmt = $this->pdo->prepare($sqlString);
+        $stmt->execute([
+            $param->title,
+            $param->description,
+            $param->project_url,
+            $param->id,
+            $param->user_id
+        ]);
+        return ["success" => true, "message" => "Project updated successfully"];
     } catch (\Throwable $th) {
-      return [
-        "success" => false,
-        "error" => $th->getMessage(),
-        "code" => $th->getCode()
-      ];
+        return [
+            "success" => false,
+            "error" => $th->getMessage(),
+            "code" => $th->getCode()
+        ];
+    }
+  }
+
+  public function deleteProject($projectId, $userId) {
+    $sqlString = "DELETE FROM projects WHERE id = ? AND user_id = ?";
+    try {
+        $stmt = $this->pdo->prepare($sqlString);
+        $stmt->execute([$projectId, $userId]);
+        
+        if ($stmt->rowCount() === 0) {
+            return [
+                "success" => false,
+                "error" => "Project not found or unauthorized",
+                "code" => 404
+            ];
+        }
+        
+        return ["success" => true, "message" => "Project deleted successfully"];
+    } catch (\Throwable $th) {
+        return [
+            "success" => false,
+            "error" => $th->getMessage(),
+            "code" => $th->getCode()
+        ];
     }
   }
 }

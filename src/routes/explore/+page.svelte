@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { fetchApi } from '$lib/api';
 
   // Example portfolios (keeping these as fallback)
   let examplePortfolios = [
@@ -32,8 +33,7 @@
 
   async function fetchPortfolios() {
     try {
-      const response = await fetch('/api/explore');
-      const data = await response.json();
+      const data = await fetchApi('/api/explore');
       
       if (data.success) {
         portfolios = [...examplePortfolios, ...data.portfolios.map((p: {
@@ -65,32 +65,25 @@
 
   async function handleLike(portfolioId: number) {
     try {
-      // Check authentication status from server
-      const userResponse = await fetch('/api/user');
-      const userData = await userResponse.json();
+      const userData = await fetchApi('/api/user');
       
       if (userData.error) {
         goto('/login');
         return;
       }
 
-      const response = await fetch('/api/togglelike', {
+      const data = await fetchApi('/api/togglelike', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           portfolio_id: portfolioId
         })
       });
 
-      const data = await response.json();
       if (data.success) {
-        // Refresh portfolios to get updated like count
-        fetchPortfolios();
+        await fetchPortfolios();
       }
-    } catch (err) {
-      console.error('Failed to toggle like:', err);
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to like portfolio';
     }
   }
 

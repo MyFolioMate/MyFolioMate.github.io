@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { fetchApi } from '$lib/api';
 
   let user: any = null;
   let portfolio: any = null;
@@ -9,15 +10,9 @@
 
   async function checkAuth() {
     try {
-      const response = await fetch('/api/user', {
+      const data = await fetchApi('/api/user', {
         credentials: 'include'
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data');
-      }
-      
-      const data = await response.json();
       
       if (data.error) {
         throw new Error(data.error);
@@ -35,15 +30,10 @@
 
   async function checkPortfolio() {
     try {
-      const response = await fetch(`/api/portfolio/${user.username}`, {
+      const data = await fetchApi(`/api/portfolio/${user.username}`, {
         credentials: 'include'
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch portfolio data');
-      }
-      
-      const data = await response.json();
       if (data.success) {
         portfolio = data.data;
       } else {
@@ -59,14 +49,9 @@
 
   async function handleLogout() {
     try {
-      const response = await fetch('/api/logout', {
+      const data = await fetchApi('/api/logout', {
         credentials: 'include'
       });
-      
-      if (!response.ok) {
-        throw new Error('Logout failed');
-      }
-      
       goto('/');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Logout failed';

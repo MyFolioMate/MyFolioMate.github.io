@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { fetchApi } from '$lib/api';
   
   interface PageData {
     username: string;
@@ -11,7 +12,7 @@
   
   onMount(async () => {
     try {
-      const userResponse = await fetch(`/api/user/${username}`, {
+      const userResponse = await fetchApi(`/api/user/${username}`, {
         credentials: 'include'
       });
       

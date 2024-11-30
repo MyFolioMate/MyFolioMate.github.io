@@ -1,9 +1,11 @@
 <?php
 class Auth {
   protected $pdo;
+  private $encryptionKey;
 
   public function __construct(\PDO $pdo) {
     $this->pdo = $pdo;
+    $this->encryptionKey = 'YourSecureKey123!@#$%^&*()+=-_0123456789abcdefghijk';
   }
 
   protected function checkPassword($pword, $hashPword) {
@@ -28,21 +30,34 @@ class Auth {
     return substr($mb64String, 0, $len);
   }
 
-  public function encryptData($dt) {
-    $json = json_encode($dt, true);
+  public function encryptData($data) {
+    $json = json_encode($data);
     $iv = openssl_random_pseudo_bytes(16);
-    $encData = openssl_encrypt($json, "AES-256-CBC", "SampleKey", 0, $iv);
-    $payload = ["data"=>$encData, "iv"=>base64_encode(bin2hex($iv))];
+    $encData = openssl_encrypt($json, "AES-256-CBC", $this->encryptionKey, OPENSSL_RAW_DATA, $iv);
+    
+    $payload = [
+      "data" => base64_encode($encData),
+      "iv" => base64_encode($iv)
+    ];
+    
     return base64_encode(json_encode($payload));
   }
 
-  public function decryptData($dt) {
-    $payload = base64_decode($dt);
-    $payload = json_decode($payload, true);
-    $iv = hex2bin(base64_decode($payload["iv"]));
-    $encData = $payload['data'];
-    $decData = openssl_decrypt($encData, "AES-256-CBC", "SampleKey", 0, $iv);
-    return $decData;
+  public function decryptData($encryptedPayload) {
+    try {
+        $payload = json_decode(urldecode(base64_decode($encryptedPayload)), true);
+        if (!$payload || !isset($payload['data']) || !isset($payload['iv'])) {
+            return null;
+        }
+        
+        $iv = base64_decode($payload["iv"]);
+        $encData = base64_decode($payload["data"]);
+        $decData = openssl_decrypt($encData, "AES-256-CBC", $this->encryptionKey, OPENSSL_RAW_DATA, $iv);
+        
+        return json_decode($decData, true);
+    } catch (Exception $e) {
+        return null;
+    }
   }
 
   public function login($email, $password) {

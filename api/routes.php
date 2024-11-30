@@ -6,6 +6,17 @@ require_once("./modules/Get.php");
 require_once("./modules/Post.php");
 require_once("./modules/Auth.php");
 
+function encryptResponse($data) {
+  global $auth;
+  return $auth->encryptData($data);
+}
+
+function decryptRequest() {
+  global $auth;
+  $rawData = file_get_contents("php://input");
+  return $auth->decryptData($rawData);
+}
+
 try {
   $db = new Connection();
   $pdo = $db->connect();
@@ -34,9 +45,9 @@ try {
             // Handle portfolio update
             $data = json_decode(file_get_contents("php://input"));
             if ($userId && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $userId) {
-              echo json_encode($post->updatePortfolio($data));
+              echo encryptResponse($post->updatePortfolio($data));
             } else {
-              echo json_encode([
+              echo encryptResponse([
                 "success" => false,
                 "error" => "Unauthorized",
                 "code" => 401
@@ -44,7 +55,7 @@ try {
             }
           } else {
             // Get portfolio
-            echo json_encode($get->getPortfolio($username, $userId));
+            echo encryptResponse($get->getPortfolio($username, $userId));
           }
           break;
         
@@ -53,7 +64,7 @@ try {
           $userId = $req[2] ?? null;
           
           if (!$username) {
-              echo json_encode([
+              echo encryptResponse([
                   "success" => false,
                   "error" => "Username is required",
                   "code" => 400
@@ -61,43 +72,48 @@ try {
               break;
           }
           
-          echo json_encode($get->getProjects($username, $userId));
+          echo encryptResponse($get->getProjects($username, $userId));
           break;
         case 'explore':
-          echo json_encode($get->getAllPortfolios());
+          echo encryptResponse($get->getAllPortfolios());
         break;
         case 'user':
           if (isset($_SESSION['user_id'])) {
-              echo json_encode([
+              echo encryptResponse([
                   'id' => $_SESSION['user_id'],
                   'username' => $_SESSION['username'],
                   'email' => $_SESSION['email']
               ]);
           } else {
-              echo json_encode(['error' => 'Not authenticated']);
+              echo encryptResponse(['error' => 'Not authenticated']);
           }
         break;
         case 'logout':
           session_destroy();
-          echo json_encode(['success' => true]);
+          echo encryptResponse(['success' => true]);
         break;
         default:
-          echo json_encode(["error" => "No public API available"]);
+          echo encryptResponse(["error" => "No public API available"]);
       }
     break;
 
     case 'POST':
-      $rawData = file_get_contents("php://input");
-      $d = json_decode($rawData);
-      
+      $decryptedData = decryptRequest();
+      if ($decryptedData === null) {
+          echo encryptResponse([
+              "error" => "Invalid encrypted data",
+              "code" => 400
+          ]);
+          break;
+      }
+
       switch($req[0]) {
         case 'register':
-          echo json_encode($post->createUser($d));
+          echo encryptResponse($post->createUser((object)$decryptedData));
         break;
 
         case 'login':
-          $data = json_decode(file_get_contents("php://input"));
-          $result = $auth->login($data->email, $data->password);
+          $result = $auth->login($decryptedData['email'], $decryptedData['password']);
           
           if (!isset($result['error'])) {
               $_SESSION['user_id'] = $result['id'];
@@ -105,34 +121,113 @@ try {
               $_SESSION['email'] = $result['email'];
           }
           
-          echo json_encode($result);
+          echo encryptResponse($result);
         break;
 
         case 'updateportfolio':
-          echo json_encode($post->updatePortfolio($d));
+          echo encryptResponse($post->updatePortfolio((object)$decryptedData));
+        break;
+
+        case 'projects':
+          // Handle adding new project
+          if (isset($_SESSION['user_id'])) {
+            echo encryptResponse($post->addProject((object)$decryptedData));
+          } else {
+            echo encryptResponse(["error" => "Unauthorized", "code" => 401]);
+          }
+          break;
+
+        case 'togglelike':
+          echo encryptResponse($post->toggleLike((object)$decryptedData));
         break;
 
         case 'addproject':
-          echo json_encode($post->addProject($d));
-        break;
-
-        case 'togglelike':
-          echo json_encode($post->toggleLike($d));
-        break;
+          if (isset($_SESSION['user_id'])) {
+            $userId = $req[1] ?? null;
+            $username = $req[2] ?? null;
+            
+            if (!$userId || !$username) {
+                echo encryptResponse([
+                    "success" => false,
+                    "error" => "Missing user ID or username",
+                    "code" => 400
+                ]);
+                break;
+            }
+            
+            if ($_SESSION['user_id'] != $userId) {
+                echo encryptResponse([
+                    "success" => false,
+                    "error" => "Unauthorized",
+                    "code" => 401
+                ]);
+                break;
+            }
+            
+            echo encryptResponse($post->addProject((object)$decryptedData));
+          } else {
+            echo encryptResponse(["error" => "Unauthorized", "code" => 401]);
+          }
+          break;
 
         default:
-          echo json_encode(["error" => "Invalid endpoint"]);
+          echo encryptResponse(["error" => "Invalid endpoint"]);
       }
     break;
 
+    case 'PUT':
+      $decryptedData = decryptRequest();
+      if ($decryptedData === null) {
+          echo encryptResponse([
+              "error" => "Invalid encrypted data",
+              "code" => 400
+          ]);
+          break;
+      }
+
+      switch($req[0]) {
+        case 'projects':
+          // Handle updating project
+          if (isset($_SESSION['user_id'])) {
+            echo encryptResponse($post->updateProject((object)$decryptedData));
+          } else {
+            echo encryptResponse(["error" => "Unauthorized", "code" => 401]);
+          }
+          break;
+          
+        default:
+          echo encryptResponse(["error" => "Invalid endpoint"]);
+      }
+      break;
+
+    case 'DELETE':
+      switch($req[0]) {
+        case 'projects':
+          // Handle deleting project
+          if (isset($_SESSION['user_id'])) {
+            $projectId = $req[1] ?? null;
+            if ($projectId) {
+              echo encryptResponse($post->deleteProject($projectId, $_SESSION['user_id']));
+            } else {
+              echo encryptResponse(["error" => "Project ID required", "code" => 400]);
+            }
+          } else {
+            echo encryptResponse(["error" => "Unauthorized", "code" => 401]);
+          }
+          break;
+          
+        default:
+          echo encryptResponse(["error" => "Invalid endpoint"]);
+      }
+      break;
+
     default:
-      echo "NA";
+      echo encryptResponse(["error" => "Method not allowed"]);
   }
 } catch (Exception $e) {
   http_response_code(500);
-  echo json_encode([
+  echo encryptResponse([
       "error" => "Server error",
       "message" => $e->getMessage()
   ]);
-  exit;
 }
