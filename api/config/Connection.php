@@ -1,37 +1,34 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Credentials: true");
-header("Content-Type: application/json; charset=utf-8");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Accept, X-Requested-With");
-date_default_timezone_set("Asia/Manila");
-set_time_limit(1000);
+require_once __DIR__ . '/../vendor/autoload.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
-
-define("SERVER", "localhost");
-define("DBASE", "myfolio_db");
-define("USER", "root");
-define("PASSWORD", "");
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
 
 class Connection {
-    private $conString = "mysql:host=".SERVER.";dbname=".DBASE.";charset=utf8mb4";
-    private $options = [
-        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-        \PDO::ATTR_EMULATE_PREPARES => false,
-        \PDO::ATTR_STRINGIFY_FETCHES => false
-    ];
+    private $host;
+    private $dbname;
+    private $user;
+    private $pass;
+    
+    public function __construct() {
+        $this->host = $_ENV['DB_HOST'];
+        $this->dbname = $_ENV['DB_NAME'];
+        $this->user = $_ENV['DB_USER'];
+        $this->pass = $_ENV['DB_PASS'];
+    }
 
     public function connect() {
-        $conn = false;
         try {
-            $conn = new \PDO($this->conString, USER, PASSWORD, $this->options);
-        } catch (\Throwable $th) {
-            echo "Connection error: " . $th->getMessage();//throw $th;
+            $conn = new PDO(
+                "mysql:host={$this->host};dbname={$this->dbname}",
+                $this->user,
+                $this->pass
+            );
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $conn;
+        } catch(PDOException $e) {
+            echo "Connection Error: " . $e->getMessage();
+            return null;
         }
-        return $conn;
     }
 }

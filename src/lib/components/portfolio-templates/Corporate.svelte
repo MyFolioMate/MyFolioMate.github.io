@@ -12,7 +12,33 @@
 </style>
 
 <main class="min-h-screen bg-gray-50">
-  <div class="bg-white shadow-sm">
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {portfolio.theme_color}">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span style="color: {portfolio.theme_color}">{portfolio.user?.full_name || 'Portfolio'}</span>
+        </h2>
+        <nav class="flex space-x-8">
+          <button 
+            on:click={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+            class="text-gray-600 hover:text-gray-900 flex items-center">About</button>
+          <button 
+            on:click={() => document.getElementById('skills')?.scrollIntoView({ behavior: 'smooth' })}
+            class="text-gray-600 hover:text-gray-900 flex items-center">Skills</button>
+          <button 
+            on:click={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
+            class="text-gray-600 hover:text-gray-900 flex items-center">Projects</button>
+          <button 
+            on:click={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+            class="text-gray-600 hover:text-gray-900 flex items-center">Contact</button>
+        </nav>
+      </div>
+    </div>
+  </header>
+  <section id="about" class="bg-white shadow-sm">
     <div class="max-w-7xl mx-auto px-4 py-6">
       <div class="px-8 py-16 border-b relative" style="background-color: {portfolio.theme_color}05">
         <div class="max-w-3xl">
@@ -38,7 +64,11 @@
           {/if}
         </div>
       </div>
+    </div>
+  </section>
 
+  <section id="skills" class="bg-gray-50 p-8 rounded-lg">
+    <div class="max-w-7xl mx-auto px-4 py-6">
       <div class="px-8 py-12">
         <!-- Education & Skills -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -58,18 +88,32 @@
             <div class="flex flex-wrap gap-3">
               {#if portfolio.skills}
                 {#each portfolio.skills as skill}
-                  <span 
-                    class="px-4 py-2 rounded-md text-white transition-colors"
-                    style="background-color: {portfolio.theme_color}"
-                  >
-                    {skill}
-                  </span>
+                  <div class="group relative">
+                    <span 
+                      class="px-4 py-2 rounded-md text-white transition-colors"
+                      style="background-color: {portfolio.theme_color}"
+                    >
+                      {skill.name}
+                    </span>
+                    {#if skill.description}
+                      <div class="absolute z-10 bottom-full mb-2 left-0 hidden group-hover:block bg-white p-4 rounded-lg shadow-lg text-sm min-w-[200px] border border-gray-100">
+                        <p class="text-gray-700">{skill.description}</p>
+                        <div class="absolute bottom-[-6px] left-4 w-3 h-3 bg-white border-r border-b border-gray-100 transform rotate-45"></div>
+                      </div>
+                    {/if}
+                  </div>
                 {/each}
               {/if}
             </div>
           </section>
         </div>
+      </div>
+    </div>
+  </section>
 
+  <section id="projects" class="mb-12">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="px-8 py-12">
         <!-- Projects -->
         <section class="mb-12">
           <h2 class="text-2xl font-semibold mb-8" style="color: {portfolio.theme_color}">Featured Projects</h2>
@@ -101,7 +145,13 @@
             {@html portfolio.achievements || 'No achievements listed yet.'}
           </div>
         </section>
+      </div>
+    </div>
+  </section>
 
+  <section id="contact" class="bg-gray-50 p-8 rounded-lg">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="px-8 py-12">
         <!-- Contact -->
         <section class="bg-gray-50 p-8 rounded-lg">
           <h2 class="text-2xl font-semibold mb-6" style="color: {portfolio.theme_color}">Contact Information</h2>
@@ -111,5 +161,5 @@
         </section>
       </div>
     </div>
-  </div>
+  </section>
 </main> 

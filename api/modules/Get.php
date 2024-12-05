@@ -50,6 +50,14 @@ class Get {
         );
       }
 
+      // Fetch skills
+      $skillsStmt = $this->pdo->prepare("SELECT skill FROM skills WHERE user_id = ?");
+      $skillsStmt->execute([$user['id']]);
+      $skills = $skillsStmt->fetchAll(\PDO::FETCH_COLUMN);
+
+      // Merge skills into portfolio data
+      $portfolio['skills'] = $skills;
+
       return array(
         "success" => true,
         "data" => array_merge($portfolio, ['user' => $user])
@@ -63,44 +71,42 @@ class Get {
     }
   }
 
-  public function getProjects($username, $userId = null) {
-    $sqlString = "SELECT p.id, p.title, p.description, p.project_url, p.image_url, p.created_at 
-                  FROM projects p
-                  JOIN users u ON u.id = p.user_id
-                  WHERE u.username = ?";
-    $params = [$username];
-    
-    if ($userId !== null) {
-        $sqlString .= " AND p.user_id = ?";
-        $params[] = $userId;
-    }
-    
-    $sqlString .= " ORDER BY p.created_at DESC";
-    
+  public function getProjects($username, $userId) {
     try {
-        $stmt = $this->pdo->prepare($sqlString);
-        $stmt->execute($params);
+        $stmt = $this->pdo->prepare("
+            SELECT id, title, description, project_url
+            FROM projects 
+            WHERE user_id = ?
+        ");
+        $stmt->execute([$userId]);
         $projects = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
-        return array(
+        return [
             "success" => true,
             "data" => $projects
-        );
+        ];
     } catch (\Throwable $th) {
-        return array(
+        error_log("Project Fetch Error: " . $th->getMessage());
+        return [
             "success" => false,
-            "error" => "Unable to fetch projects: " . $th->getMessage(),
+            "error" => $th->getMessage(),
             "code" => 500
-        );
+        ];
     }
   }
 
+  public function getUserIdByUsername($username) {
+    $stmt = $this->pdo->prepare("SELECT id FROM users WHERE username = ?");
+    $stmt->execute([$username]);
+    $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+    return $user ? $user['id'] : null;
+  }
+
   public function getAllPortfolios() {
-    $sqlString = "SELECT u.username, u.full_name, p.title, p.about, p.theme_color, p.design_template,
-                  (SELECT COUNT(*) FROM likes WHERE portfolio_id = p.id) as likes
+    $sqlString = "SELECT u.username, u.full_name, p.title, p.about, p.theme_color, p.design_template
                   FROM users u 
                   JOIN portfolios p ON u.id = p.user_id 
-                  ORDER BY likes DESC, u.created_at DESC";
+                  ORDER BY u.created_at DESC";
     try {
       $stmt = $this->pdo->prepare($sqlString);
       $stmt->execute();

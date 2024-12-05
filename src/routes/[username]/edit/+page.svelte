@@ -14,7 +14,6 @@
   // Form data
   let title = '';
   let about = '';
-  let skills = '';  // Will be converted to/from array
   let contact_info = '';
   let theme_color = '#000000';
   let design_template: 'classic' | 'modern' | 'minimal' | 'creative' | 'corporate' = 'classic';
@@ -33,6 +32,42 @@
   let editProjectTitle = '';
   let editProjectDescription = '';
   let editProjectUrl = '';
+  
+  // Skills-related variables
+  interface Skill {
+    name: string;
+    description: string;
+  }
+
+  let skillInput = '';
+  let skillDescriptionInput = '';
+  let skills: Skill[] = [];
+  
+  // Add near other skill-related variables
+  let editingSkill: string | null = null;
+  let editSkillName = '';
+  let editSkillDescription = '';
+  
+  // Skills management functions
+  function addSkill() {
+    const trimmedSkill = skillInput.trim();
+    const trimmedDescription = skillDescriptionInput.trim();
+
+    if (trimmedSkill && !skills.some(s => s.name === trimmedSkill)) {
+      skills = [...skills, { 
+        name: trimmedSkill, 
+        description: trimmedDescription 
+      }];
+      
+      // Reset inputs
+      skillInput = '';
+      skillDescriptionInput = '';
+    }
+  }
+
+  function removeSkill(skillToRemove: string) {
+    skills = skills.filter(skill => skill.name !== skillToRemove);
+  }
   
   onMount(async () => {
     try {
@@ -54,7 +89,15 @@
       if (portfolioData && !portfolioData.error) {
         title = portfolioData.title || 'My Portfolio';
         about = portfolioData.about || 'Welcome to my portfolio';
-        skills = Array.isArray(portfolioData.skills) ? portfolioData.skills.join(', ') : (portfolioData.skills || '');
+        
+        // Load skills with descriptions
+        skills = Array.isArray(portfolioData.skills) 
+          ? portfolioData.skills.map(skill => ({
+              name: typeof skill === 'string' ? skill : skill.skill,
+              description: typeof skill === 'object' ? skill.description : ''
+            }))
+          : [];
+        
         contact_info = portfolioData.contact_info || 'Email: ' + user.email;
         theme_color = portfolioData.theme_color || '#000000';
         design_template = portfolioData.design_template || 'classic';
@@ -63,11 +106,18 @@
         social_links = portfolioData.social_links || '';
       }
 
-      // Add this to the onMount function after loading portfolio data
+      // Fetch projects specifically
       const projectsData = await fetchApi(`/api/projects/${username}`);
-      projects = projectsData.success ? projectsData.data : [];
+      
+      if (projectsData.success) {
+        projects = projectsData.data || [];
+      } else {
+        error = projectsData.error || 'Failed to load projects';
+        projects = [];
+      }
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to load portfolio';
+      error = e instanceof Error ? e.message : 'Failed to load portfolio and projects';
+      projects = [];
     } finally {
       loading = false;
     }
@@ -85,7 +135,7 @@
           user_id: user.id,
           title,
           about,
-          skills: skills.split(',').map(s => s.trim()),
+          skills, // Send skills as an array of objects
           contact_info,
           theme_color,
           design_template,
@@ -105,7 +155,7 @@
     }
   }
 
-  async function handleProjectSubmit(e: SubmitEvent) {
+  async function handleProjectSubmit(e: MouseEvent) {
     e.preventDefault();
     error = null;
     success = null;
@@ -117,24 +167,23 @@
                 user_id: user.id,
                 title: projectTitle,
                 description: projectDescription,
-                project_url: projectUrl,
-                image_url: '' // Add empty string as it's required by the database
+                project_url: projectUrl
             })
         });
 
         if (!data.success) {
-            throw new Error(data.error);
+            throw new Error(data.error || 'Failed to add project');
         }
 
-        // Clear form
+        // Reload projects after successful addition
+        const projectsData = await fetchApi(`/api/projects/${username}`);
+        projects = projectsData.success ? projectsData.data : [];
+        
+        // Clear form and show success
         projectTitle = '';
         projectDescription = '';
         projectUrl = '';
         success = 'Project added successfully';
-        
-        // Reload projects
-        const projectsData = await fetchApi(`/api/projects/${username}`);
-        projects = projectsData.success ? projectsData.data : [];
     } catch (e) {
         error = e instanceof Error ? e.message : 'Failed to add project';
     }
@@ -218,30 +267,51 @@
     success = null;
 
     try {
-      const data = await fetchApi(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          id: projectId,
-          title: editProjectTitle,
-          description: editProjectDescription,
-          project_url: editProjectUrl,
-          user_id: user.id,
-          username: username
-        })
-      });
+        const data = await fetchApi(`/api/projects/${projectId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                id: projectId,
+                title: editProjectTitle,
+                description: editProjectDescription,
+                project_url: editProjectUrl,
+                user_id: user.id,
+                username: username
+            })
+        });
 
-      if (!data.success) {
-        throw new Error(data.error);
-      }
+        if (!data.success) {
+            throw new Error(data.error);
+        }
 
-      editingProject = null;
-      success = 'Project updated successfully';
-      
-      const projectsData = await fetchApi(`/api/projects/${username}`);
-      projects = projectsData.success ? projectsData.data : [];
+        editingProject = null;
+        success = 'Project updated successfully';
+        
+        const projectsData = await fetchApi(`/api/projects/${username}`);
+        projects = projectsData.success ? projectsData.data : [];
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to update project';
+        error = e instanceof Error ? e.message : 'Failed to update project';
     }
+  }
+
+  // Add these functions
+  function startSkillEditing(skill: Skill) {
+    editingSkill = skill.name;
+    editSkillName = skill.name;
+    editSkillDescription = skill.description;
+  }
+
+  function cancelSkillEditing() {
+    editingSkill = null;
+  }
+
+  function handleEditSkill() {
+    if (!editingSkill) return;
+    skills = skills.map(s => 
+      s.name === editingSkill 
+        ? { name: editSkillName, description: editSkillDescription }
+        : s
+    );
+    editingSkill = null;
   }
 </script>
 
@@ -262,17 +332,25 @@
     <div class="bg-white border-b sticky top-0 z-50 shadow-sm">
       <div class="container mx-auto px-4 max-w-7xl">
         <div class="flex justify-between items-center h-16">
-          <h1 class="text-xl font-bold text-gray-900">Editing: {title || 'My Portfolio'}</h1>
+          <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Editing: {title || 'My Portfolio'}
+          </h1>
           <div class="flex items-center space-x-4">
-            <a href="/profile" class="text-gray-600 hover:text-gray-900">
-              ← Back to Profile
+            <a href="/profile" class="text-gray-600 hover:text-gray-900 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Profile
             </a>
             <a 
-              href={`/${username}`} 
+              href={`/${username}/${user.id}`} 
               target="_blank"
               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <span>Preview Portfolio</span>
+              Preview Portfolio
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
@@ -284,7 +362,7 @@
 
     <!-- Main Content Area -->
     <div class="container mx-auto px-4 max-w-7xl py-8">
-      <!-- Success/Error Messages -->
+      <!-- Error/Success Messages -->
       {#if error || success}
         <div class="mb-6 sticky top-16 z-40">
           {#if error}
@@ -302,300 +380,439 @@
         </div>
       {/if}
 
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <!-- Main Form Area -->
-        <div class="lg:col-span-3 space-y-6">
-          <!-- Basic Information Card -->
-          <div class="bg-white rounded-lg shadow-md">
-            <div class="p-6">
+      <!-- Main Edit Form -->
+      <form on:submit={handleSubmit} class="space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left Column: Basic Information -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Basic Information Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
               <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 Basic Information
               </h2>
-              <form on:submit={handleSubmit} class="space-y-6">
-                <!-- Basic fields -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700">Portfolio Title</label>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Portfolio Title</label>
+                  <input
+                    id="title"
+                    type="text"
+                    bind:value={title}
+                    required
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label for="theme_color" class="block text-sm font-medium text-gray-700 mb-2">Theme Color</label>
+                  <div class="flex items-center space-x-4">
                     <input
-                      id="title"
-                      type="text"
-                      bind:value={title}
-                      required
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      id="theme_color"
+                      type="color"
+                      bind:value={theme_color}
+                      class="h-12 w-12 p-1 border border-gray-300 rounded"
                     />
-                  </div>
-                  <div>
-                    <label for="theme_color" class="block text-sm font-medium text-gray-700">Theme Color</label>
-                    <div class="mt-1 flex items-center space-x-3">
-                      <input
-                        id="theme_color"
-                        type="color"
-                        bind:value={theme_color}
-                        class="h-10 w-20 p-1 border border-gray-300 rounded"
-                      />
-                      <span class="text-sm text-gray-500">{theme_color}</span>
-                    </div>
+                    <span class="text-sm text-gray-500">{theme_color}</span>
                   </div>
                 </div>
+              </div>
 
-                <!-- About section -->
+              <div class="mt-6">
+                <label for="about" class="block text-sm font-medium text-gray-700 mb-2">About Me</label>
+                <textarea
+                  id="about"
+                  bind:value={about}
+                  rows="4"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Contact & Social Information -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+              <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Contact & Social Links
+              </h2>
+              <div class="space-y-4">
                 <div>
-                  <label for="about" class="block text-sm font-medium text-gray-700">About Me</label>
+                  <label for="contact_info" class="block text-sm font-medium text-gray-700 mb-2">Contact Information</label>
                   <textarea
-                    id="about"
-                    bind:value={about}
-                    rows="4"
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    id="contact_info"
+                    bind:value={contact_info}
+                    rows="2"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Email, Phone, etc."
                   ></textarea>
                 </div>
+                <div>
+                  <label for="social_links" class="block text-sm font-medium text-gray-700 mb-2">Social Links</label>
+                  <textarea
+                    id="social_links"
+                    bind:value={social_links}
+                    rows="2"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="GitHub: https://github.com/username&#10;LinkedIn: https://linkedin.com/in/username"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
 
-                <!-- Add after the About section, before the Save Button -->
-                <div class="space-y-6">
-                  <!-- Skills -->
+            <!-- Skills Management Component -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+              <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+                Skills Management
+              </h2>
+
+              <!-- Add Skill Form -->
+              <div class="space-y-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label for="skills" class="block text-sm font-medium text-gray-700">Skills (comma-separated)</label>
+                    <label for="skillName" class="block text-sm font-medium text-gray-700 mb-2">Skill Name</label>
                     <input
-                      id="skills"
+                      id="skillName"
                       type="text"
-                      bind:value={skills}
-                      placeholder="React, TypeScript, Node.js"
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      bind:value={skillInput}
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter skill name"
                     />
                   </div>
-
-                  <!-- Contact Info -->
                   <div>
-                    <label for="contact_info" class="block text-sm font-medium text-gray-700">Contact Information</label>
-                    <textarea
-                      id="contact_info"
-                      bind:value={contact_info}
-                      rows="2"
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    ></textarea>
-                  </div>
-
-                  <!-- Education -->
-                  <div>
-                    <label for="education" class="block text-sm font-medium text-gray-700">Education</label>
-                    <textarea
-                      id="education"
-                      bind:value={education}
-                      rows="3"
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    ></textarea>
-                  </div>
-
-                  <!-- Achievements -->
-                  <div>
-                    <label for="achievements" class="block text-sm font-medium text-gray-700">Achievements</label>
-                    <textarea
-                      id="achievements"
-                      bind:value={achievements}
-                      rows="3"
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    ></textarea>
-                  </div>
-
-                  <!-- Social Links -->
-                  <div>
-                    <label for="social_links" class="block text-sm font-medium text-gray-700">Social Links</label>
-                    <textarea
-                      id="social_links"
-                      bind:value={social_links}
-                      rows="2"
-                      placeholder="GitHub: https://github.com/username&#10;LinkedIn: https://linkedin.com/in/username"
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    ></textarea>
+                    <label for="skillDescription" class="block text-sm font-medium text-gray-700 mb-2">Skill Description (Optional)</label>
+                    <input
+                      id="skillDescription"
+                      type="text"
+                      bind:value={skillDescriptionInput}
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Describe your skill"
+                    />
                   </div>
                 </div>
-
-                <!-- Save Button -->
-                <div class="flex justify-end pt-4">
-                  <button
-                    type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                <div class="flex justify-end">
+                  <button 
+                    type="button"
+                    on:click={addSkill}
+                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors"
                   >
-                    Save Changes
+                    Add Skill
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
+              </div>
 
-          <!-- Projects Section -->
-          <div class="bg-white rounded-lg shadow-md">
-            <div class="p-6">
+              <!-- Skills List -->
+              <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Your Skills</h3>
+                {#if skills.length === 0}
+                  <p class="text-gray-500 italic">No skills added yet</p>
+                {:else}
+                  <div class="space-y-4">
+                    {#each skills as skill (skill.name)}
+                      {#if editingSkill === skill.name}
+                        <!-- Edit Skill Form -->
+                        <div class="bg-blue-50 rounded-lg p-4 space-y-4">
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Skill Name</label>
+                              <input
+                                type="text"
+                                bind:value={editSkillName}
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Skill Description</label>
+                              <input
+                                type="text"
+                                bind:value={editSkillDescription}
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                              />
+                            </div>
+                          </div>
+                          <div class="flex justify-end space-x-2">
+                            <button 
+                              type="button"
+                              on:click={cancelSkillEditing}
+                              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              type="button"
+                              on:click={handleEditSkill}
+                              class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                            >
+                              Save Changes
+                            </button>
+                          </div>
+                        </div>
+                      {:else}
+                        <!-- Skill Display -->
+                        <div class="bg-gray-50 rounded-lg p-4 flex justify-between items-start">
+                          <div>
+                            <h4 class="font-semibold text-gray-800">{skill.name}</h4>
+                            {#if skill.description}
+                              <p class="text-sm text-gray-600 mt-1">{skill.description}</p>
+                            {/if}
+                          </div>
+                          <div class="flex space-x-2">
+                            <button 
+                              type="button"
+                              on:click={() => startSkillEditing(skill)}
+                              class="text-blue-500 hover:text-blue-700"
+                              title="Edit Skill"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                            </button>
+                            <button 
+                              type="button"
+                              on:click={() => removeSkill(skill.name)}
+                              class="text-red-500 hover:text-red-700"
+                              title="Delete Skill"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      {/if}
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            </div>
+
+            <!-- Projects Management Component -->
+            <div class="bg-white rounded-lg shadow-md p-6">
               <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19H6v-.531a3.374 3.374 0 00-.988-2.407l-.548-.547z" />
                 </svg>
-                Projects
+                Projects Management
               </h2>
-              
-              <!-- Add New Project Form -->
-              <div class="mb-8 border-b pb-6">
-                <form on:submit={handleProjectSubmit} class="space-y-4">
+
+              <!-- Add Project Form -->
+              <div class="space-y-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label for="projectTitle" class="block text-sm font-medium text-gray-700">Project Title</label>
+                    <label for="projectTitle" class="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
                     <input
                       id="projectTitle"
                       type="text"
                       bind:value={projectTitle}
-                      required
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter project title"
                     />
                   </div>
-
                   <div>
-                    <label for="projectDescription" class="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
-                      id="projectDescription"
-                      bind:value={projectDescription}
-                      required
-                      rows="3"
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    ></textarea>
-                  </div>
-
-                  <div>
-                    <label for="projectUrl" class="block text-sm font-medium text-gray-700">Project URL</label>
+                    <label for="projectUrl" class="block text-sm font-medium text-gray-700 mb-2">Project URL</label>
                     <input
                       id="projectUrl"
                       type="url"
                       bind:value={projectUrl}
-                      required
-                      placeholder="https://"
-                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="https://github.com/username/project"
                     />
                   </div>
-
-                  <div class="flex justify-end">
-                    <button
-                      type="submit"
-                      class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Project
-                    </button>
-                  </div>
-                </form>
+                </div>
+                <div>
+                  <label for="projectDescription" class="block text-sm font-medium text-gray-700 mb-2">Project Description</label>
+                  <textarea
+                    id="projectDescription"
+                    bind:value={projectDescription}
+                    rows="3"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Describe your project"
+                  ></textarea>
+                </div>
+                <div class="flex justify-end">
+                  <button 
+                    type="button"
+                    on:click={handleProjectSubmit}
+                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors"
+                  >
+                    Add Project
+                  </button>
+                </div>
               </div>
 
-              <!-- Projects Grid -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {#each projects as project}
-                  <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    {#if editingProject === project.id}
-                      <!-- Edit Project Form -->
-                      <form on:submit|preventDefault={() => handleEditProject(project.id)} class="space-y-4">
-                        <div>
-                          <label for="editTitle" class="block text-sm font-medium text-gray-700">Title</label>
-                          <input
-                            id="editTitle"
-                            type="text"
-                            bind:value={editProjectTitle}
-                            required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                        </div>
-
-                        <div>
-                          <label for="editDescription" class="block text-sm font-medium text-gray-700">Description</label>
-                          <textarea
-                            id="editDescription"
-                            bind:value={editProjectDescription}
-                            required
-                            rows="3"
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                          ></textarea>
-                        </div>
-
-                        <div>
-                          <label for="editUrl" class="block text-sm font-medium text-gray-700">Project URL</label>
-                          <input
-                            id="editUrl"
-                            type="url"
-                            bind:value={editProjectUrl}
-                            required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                        </div>
-
-                        <div class="flex justify-end space-x-2">
-                          <button
-                            type="button"
-                            on:click={cancelEditing}
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                          >
-                            Save Changes
-                          </button>
-                        </div>
-                      </form>
-                    {:else}
-                      <!-- Project Display -->
-                      <h3 class="font-semibold text-lg mb-2">{project.title}</h3>
-                      <p class="text-gray-600 text-sm mb-4">{project.description}</p>
-                      <div class="flex justify-between items-center">
-                        <a href={project.project_url} target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
-                          View Project →
-                        </a>
-                        <div class="space-x-2">
-                          <button 
-                            on:click={() => startEditing(project)}
-                            class="text-gray-600 hover:text-gray-800"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            on:click={() => deleteProject(project.id)}
-                            class="text-red-600 hover:text-red-800"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    {/if}
-                  </div>
-                {/each}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Column - Design & Template -->
-        <div class="lg:col-span-1">
-          <div class="bg-white rounded-lg shadow p-6 space-y-6">
-            <h2 class="text-xl font-semibold text-gray-900 pb-4 border-b">Design Settings</h2>
-            <div class="space-y-4">
+              <!-- Projects List -->
               <div>
-                <label for="design_template" class="block text-sm font-medium text-gray-700">Template Style</label>
-                <select
-                  id="design_template"
-                  bind:value={design_template}
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="classic">Classic</option>
-                  <option value="modern">Modern</option>
-                  <option value="minimal">Minimal</option>
-                  <option value="creative">Creative</option>
-                  <option value="corporate">Corporate</option>
-                </select>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Your Projects</h3>
+                {#if projects.length === 0}
+                  <p class="text-gray-500 italic">No projects added yet</p>
+                {:else}
+                  <div class="space-y-4">
+                    {#each projects as project (project.id)}
+                      {#if editingProject === project.id}
+                        <!-- Edit Project Form -->
+                        <div class="bg-blue-50 rounded-lg p-4 space-y-4">
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
+                              <input
+                                type="text"
+                                bind:value={editProjectTitle}
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Project URL</label>
+                              <input
+                                type="url"
+                                bind:value={editProjectUrl}
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Project Description</label>
+                            <textarea
+                              bind:value={editProjectDescription}
+                              rows="3"
+                              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                            ></textarea>
+                          </div>
+                          <div class="flex justify-end space-x-2">
+                            <button 
+                              type="button"
+                              on:click={cancelEditing}
+                              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              type="button"
+                              on:click={() => handleEditProject(project.id)}
+                              class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                            >
+                              Save Changes
+                            </button>
+                          </div>
+                        </div>
+                      {:else}
+                        <!-- Project Display -->
+                        <div class="bg-gray-50 rounded-lg p-4 flex justify-between items-start">
+                          <div>
+                            <h4 class="font-semibold text-gray-800">{project.title}</h4>
+                            <p class="text-sm text-gray-600 mt-1">{project.description}</p>
+                            {#if project.project_url}
+                              <a 
+                                href={project.project_url} 
+                                target="_blank" 
+                                class="text-blue-500 hover:text-blue-700 text-sm mt-1 inline-block"
+                              >
+                                View Project
+                              </a>
+                            {/if}
+                          </div>
+                          <div class="flex space-x-2">
+                            <button 
+                              type="button"
+                              on:click={() => startEditing(project)}
+                              class="text-blue-500 hover:text-blue-700"
+                              title="Edit Project"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                            </button>
+                            <button 
+                              type="button"
+                              on:click={() => deleteProject(project.id)}
+                              class="text-red-500 hover:text-red-700"
+                              title="Delete Project"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      {/if}
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Design & Template -->
+          <div class="space-y-6">
+            <!-- Design Settings Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+              <h2 class="text-xl font-semibold text-gray-900 pb-4 border-b mb-4">Design Settings</h2>
+              <div class="space-y-4">
+                <div>
+                  <label for="design_template" class="block text-sm font-medium text-gray-700 mb-2">Template Style</label>
+                  <select
+                    id="design_template"
+                    bind:value={design_template}
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="classic">Classic</option>
+                    <option value="modern">Modern</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="creative">Creative</option>
+                    <option value="corporate">Corporate</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Information Cards -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+              <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                Additional Information
+              </h2>
+              <div class="space-y-4">
+                <div>
+                  <label for="education" class="block text-sm font-medium text-gray-700 mb-2">Education</label>
+                  <textarea
+                    id="education"
+                    bind:value={education}
+                    rows="3"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Degrees, certifications, etc."
+                  ></textarea>
+                </div>
+                <div>
+                  <label for="achievements" class="block text-sm font-medium text-gray-700 mb-2">Achievements</label>
+                  <textarea
+                    id="achievements"
+                    bind:value={achievements}
+                    rows="3"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Awards, recognitions, etc."
+                  ></textarea>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- Save Changes Button -->
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            class="px-8 py-3 bg-blue-600 text-white rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            Save All Changes
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 {/if}

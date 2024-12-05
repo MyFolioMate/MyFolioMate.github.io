@@ -43,7 +43,6 @@
           title?: string;
           image?: string;
           design_template: string;
-          likes?: number;
         }) => ({
           id: p.user_id,
           username: p.username,
@@ -51,7 +50,6 @@
           role: p.title || 'Portfolio Owner',
           image: p.image || '/default-profile.jpg',
           template: p.design_template,
-          likes: p.likes || 0
         }))];
       } else {
         error = data.error;
@@ -60,30 +58,6 @@
       error = 'Failed to fetch portfolios';
     } finally {
       loading = false;
-    }
-  }
-
-  async function handleLike(portfolioId: number) {
-    try {
-      const userData = await fetchApi('/api/user');
-      
-      if (userData.error) {
-        goto('/login');
-        return;
-      }
-
-      const data = await fetchApi('/api/togglelike', {
-        method: 'POST',
-        body: JSON.stringify({
-          portfolio_id: portfolioId
-        })
-      });
-
-      if (data.success) {
-        await fetchPortfolios();
-      }
-    } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to like portfolio';
     }
   }
 
@@ -121,39 +95,26 @@
     {:else}
       <!-- Portfolios Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {#each portfolios.filter(p => 
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.role.toLowerCase().includes(searchQuery.toLowerCase())
-        ) as portfolio}
-          <div class="bg-white rounded-lg shadow-sm overflow-hidden border hover:shadow-md transition">
-            <img
-              src={portfolio.image}
-              alt={portfolio.name}
-              class="w-full h-48 object-cover"
-            />
-            <div class="p-4">
-              <div class="flex justify-between items-start mb-3">
-                <div>
-                  <h3 class="text-xl font-semibold">{portfolio.name}</h3>
+        {#each portfolios as portfolio}
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+              <div class="flex items-center mb-4">
+                <img
+                  src={portfolio.image}
+                  alt={portfolio.name}
+                  class="w-12 h-12 rounded-full object-cover"
+                />
+                <div class="ml-4">
+                  <h3 class="text-lg font-semibold">{portfolio.name}</h3>
                   <p class="text-gray-600">{portfolio.role}</p>
                 </div>
-                <button 
-                  class="text-gray-400 hover:text-red-500"
-                  on:click={() => handleLike(portfolio.id)}
-                >
-                  <div class="flex items-center">
-                    <span class="mr-1">{portfolio.likes}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                </button>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-sm text-blue-500">{portfolio.template}</span>
                 <a
                   href={`/${portfolio.username}/${portfolio.id}`}
                   class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                  on:click|stopPropagation
                 >
                   View Portfolio
                 </a>

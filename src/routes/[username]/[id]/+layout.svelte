@@ -13,7 +13,7 @@
                     <a href="/" class="text-xl font-bold text-gray-900">Portfolio Hub</a>
                     <div class="flex items-center space-x-4">
                         <a href="/profile" class="text-gray-600 hover:text-gray-900">Back to Profile</a>
-                        <a href="/{$page.params.username}" target="_blank" class="text-blue-600 hover:text-blue-800">View Portfolio</a>
+                        <a href="/{$page.params.username}/{$page.params.id}" target="_blank" class="text-blue-600 hover:text-blue-800">View Portfolio</a>
                     </div>
                 </div>
             </nav>

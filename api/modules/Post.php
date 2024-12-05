@@ -57,142 +57,101 @@ class Post {
             );
         }
 
-        // Validate and sanitize inputs
-        $title = $param->title ?? 'My Portfolio';
-        $about = $param->about ?? 'Welcome to my portfolio';
-        $skills = is_array($param->skills) ? implode(', ', $param->skills) : ($param->skills ?? '');
-        $contact_info = $param->contact_info ?? '';
-        $theme_color = $param->theme_color ?? '#000000';
-        $design_template = $param->design_template ?? 'classic';
-        $education = $param->education ?? '';
-        $achievements = $param->achievements ?? '';
-        $social_links = $param->social_links ?? '';
-
-        // Check if portfolio exists
-        $checkStmt = $this->pdo->prepare("SELECT id FROM portfolios WHERE user_id = ?");
-        $checkStmt->execute([$param->user_id]);
+        // Prepare portfolio update
+        $sqlPortfolio = "UPDATE portfolios 
+                         SET title = ?, about = ?, contact_info = ?, 
+                             theme_color = ?, design_template = ?, 
+                             education = ?, achievements = ?, social_links = ?
+                         WHERE user_id = ?";
         
-        if ($checkStmt->fetch()) {
-            // Update existing
-            $sql = "UPDATE portfolios SET 
-                    title = ?, 
-                    about = ?, 
-                    skills = ?, 
-                    contact_info = ?, 
-                    theme_color = ?, 
-                    design_template = ?,
-                    education = ?,
-                    achievements = ?,
-                    social_links = ?
-                    WHERE user_id = ?";
-        } else {
-            // Insert new
-            $sql = "INSERT INTO portfolios (
-                    title, about, skills, contact_info, 
-                    theme_color, design_template, education,
-                    achievements, social_links, user_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        }
-        
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sqlPortfolio);
         $stmt->execute([
-            $title,
-            $about,
-            $skills,
-            $contact_info,
-            $theme_color,
-            $design_template,
-            $education,
-            $achievements,
-            $social_links,
+            $param->title ?? 'My Portfolio',
+            $param->about ?? 'Welcome to my portfolio',
+            is_string($param->contact_info) ? $param->contact_info : json_encode($param->contact_info),
+            $param->theme_color ?? '#000000',
+            $param->design_template ?? 'classic',
+            is_string($param->education) ? $param->education : json_encode($param->education),
+            is_string($param->achievements) ? $param->achievements : json_encode($param->achievements),
+            $param->social_links ?? '',
             $param->user_id
         ]);
-        
+
+        // Handle skills with descriptions
+        if (isset($param->skills)) {
+            // First, remove existing skills
+            $deleteSkillsStmt = $this->pdo->prepare("DELETE FROM skills WHERE user_id = ?");
+            $deleteSkillsStmt->execute([$param->user_id]);
+
+            // Prepare skills insertion
+            $insertSkillStmt = $this->pdo->prepare("INSERT INTO skills (user_id, skill, description) VALUES (?, ?, ?)");
+            
+            // Ensure skills is an array
+            $skills = is_array($param->skills) ? $param->skills : [];
+
+            // Insert each skill
+            foreach ($skills as $skillData) {
+                $skill = $skillData['name'] ?? '';
+                $description = $skillData['description'] ?? '';
+                
+                if (!empty(trim($skill))) {
+                    $insertSkillStmt->execute([
+                        $param->user_id, 
+                        trim($skill), 
+                        trim($description)
+                    ]);
+                }
+            }
+        }
+
         return [
-            "success" => true, 
-            "message" => "Portfolio updated successfully",
-            "data" => [
-                "title" => $title,
-                "about" => $about,
-                "skills" => $skills,
-                "contact_info" => $contact_info,
-                "theme_color" => $theme_color,
-                "design_template" => $design_template,
-                "education" => $education,
-                "achievements" => $achievements,
-                "social_links" => $social_links
-            ]
+            "success" => true,
+            "message" => "Portfolio updated successfully"
         ];
     } catch (\Throwable $th) {
-        return array(
+        error_log("Portfolio Update Error: " . $th->getMessage());
+        return [
             "success" => false,
             "error" => $th->getMessage(),
             "code" => $th->getCode()
-        );
+        ];
     }
   }
 
   public function addProject($param) {
-    $sqlString = "INSERT INTO projects (user_id, title, description, image_url, project_url) 
-                  VALUES (?,?,?,?,?)";
-    $res = [];
     try {
-      $stmt = $this->pdo->prepare($sqlString);
-      $stmt->execute([
-        $param->user_id,
-        $param->title,
-        $param->description,
-        $param->image_url,
-        $param->project_url
-      ]);
-      $res = ["success" => true, "message" => "Project added successfully"];
+        $stmt = $this->pdo->prepare("
+            INSERT INTO projects 
+            (user_id, title, description, project_url) 
+            VALUES (?, ?, ?, ?)
+        ");
+        
+        $stmt->execute([
+            $param->user_id,
+            $param->title,
+            $param->description,
+            $param->project_url
+        ]);
+        
+        $projectId = $this->pdo->lastInsertId();
+        
+        return [
+            "success" => true, 
+            "message" => "Project added successfully",
+            "data" => [
+                "id" => $projectId,
+                "title" => $param->title,
+                "description" => $param->description,
+                "project_url" => $param->project_url
+            ]
+        ];
     } catch (\Throwable $th) {
-      $res = array(
-        "success" => false,
-        "error" => $th->getMessage(),
-        "code" => $th->getCode()
-      );
-    }
-    return $res;
-  }
-
-  public function toggleLike($param) {
-    if (!isset($param->user_id) || !isset($param->portfolio_id)) {
-      return array(
-        "success" => false,
-        "error" => "Missing required fields",
-        "code" => 400
-      );
-    }
-
-    try {
-      // Check if like exists
-      $checkSql = "SELECT id FROM likes WHERE user_id = ? AND portfolio_id = ?";
-      $checkStmt = $this->pdo->prepare($checkSql);
-      $checkStmt->execute([$param->user_id, $param->portfolio_id]);
-      $existing = $checkStmt->fetch();
-
-      if ($existing) {
-        // Unlike
-        $sql = "DELETE FROM likes WHERE user_id = ? AND portfolio_id = ?";
-      } else {
-        // Like
-        $sql = "INSERT INTO likes (user_id, portfolio_id) VALUES (?, ?)";
-      }
-
-      $stmt = $this->pdo->prepare($sql);
-      $stmt->execute([$param->user_id, $param->portfolio_id]);
-
-      return array(
-        "success" => true,
-        "action" => $existing ? "unliked" : "liked"
-      );
-    } catch (\Throwable $th) {
-      return array(
-        "success" => false,
-        "error" => $th->getMessage(),
-        "code" => 500
-      );
+        error_log("Add Project Error: " . $th->getMessage());
+        return [
+            "success" => false,
+            "error" => $th->getMessage(),
+            "code" => $th->getCode()
+        ];
     }
   }
 

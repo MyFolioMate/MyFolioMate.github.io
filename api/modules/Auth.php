@@ -5,7 +5,7 @@ class Auth {
 
   public function __construct(\PDO $pdo) {
     $this->pdo = $pdo;
-    $this->encryptionKey = 'YourSecureKey123!@#$%^&*()+=-_0123456789abcdefghijk';
+    $this->encryptionKey = $_ENV['ENCRYPTION_KEY'];
   }
 
   protected function checkPassword($pword, $hashPword) {

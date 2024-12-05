@@ -3,7 +3,31 @@
   export let projects;
 </script>
 
-<div class="min-h-screen bg-white">
+<header class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm z-50">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex justify-between items-center">
+      <h2 class="text-lg font-light" style="color: {portfolio.theme_color}">
+        {portfolio.user?.full_name || 'Portfolio'}
+      </h2>
+      <nav class="flex space-x-8">
+        <button 
+          on:click={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+          class="text-gray-400 hover:text-gray-800 transition-colors text-sm">About</button>
+        <button 
+          on:click={() => document.getElementById('skills')?.scrollIntoView({ behavior: 'smooth' })}
+          class="text-gray-400 hover:text-gray-800 transition-colors text-sm">Skills</button>
+        <button 
+          on:click={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
+          class="text-gray-400 hover:text-gray-800 transition-colors text-sm">Projects</button>
+        <button 
+          on:click={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+          class="text-gray-400 hover:text-gray-800 transition-colors text-sm">Contact</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="min-h-screen bg-white pt-20">
   <div class="max-w-4xl mx-auto px-4 py-20">
     <h1 class="text-6xl font-light mb-16 tracking-tight" style="color: {portfolio.theme_color}">
       {portfolio.title || 'My Portfolio'}
@@ -11,7 +35,7 @@
     
     <div class="space-y-32">
       <!-- About -->
-      <section>
+      <section id="about">
         <p class="text-xl leading-relaxed text-gray-700 max-w-2xl">{portfolio.about}</p>
         {#if portfolio.social_links}
           <div class="flex space-x-6 mt-8">
@@ -40,17 +64,24 @@
       </section>
 
       <!-- Skills -->
-      <section>
+      <section id="skills">
         <h2 class="text-2xl font-light mb-8" style="color: {portfolio.theme_color}">Skills</h2>
         <div class="flex flex-wrap gap-4">
           {#if portfolio.skills}
             {#each portfolio.skills as skill}
-              <span 
-                class="px-4 py-2 border rounded-sm text-sm transition-colors"
-                style="border-color: {portfolio.theme_color}; color: {portfolio.theme_color}"
-              >
-                {skill}
-              </span>
+              <div class="group relative">
+                <span 
+                  class="px-4 py-2 border rounded-sm text-sm transition-colors"
+                  style="border-color: {portfolio.theme_color}; color: {portfolio.theme_color}"
+                >
+                  {skill.name}
+                </span>
+                {#if skill.description}
+                  <div class="absolute z-10 bottom-full mb-2 left-0 hidden group-hover:block bg-white border border-gray-100 p-3 text-sm min-w-[200px]">
+                    <p class="text-gray-600">{skill.description}</p>
+                  </div>
+                {/if}
+              </div>
             {/each}
           {/if}
         </div>
@@ -65,7 +96,7 @@
       </section>
 
       <!-- Projects -->
-      <section>
+      <section id="projects">
         <h2 class="text-2xl font-light mb-12" style="color: {portfolio.theme_color}">Projects</h2>
         <div class="space-y-16">
           {#each projects as project}
@@ -86,7 +117,7 @@
       </section>
 
       <!-- Contact -->
-      <section>
+      <section id="contact">
         <h2 class="text-2xl font-light mb-8" style="color: {portfolio.theme_color}">Contact</h2>
         <div class="prose prose-gray max-w-2xl">
           {@html portfolio.contact_info}

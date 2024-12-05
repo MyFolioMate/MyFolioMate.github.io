@@ -35,9 +35,9 @@
           </div>
           <div class="flex items-center space-x-4">
             <a href="/profile" class="px-4 py-2 text-gray-700 hover:text-gray-900">Profile</a>
-            <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <a href="/register" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
               Get Started
-            </button>
+            </a>
           </div>
         </div>
       </nav>
