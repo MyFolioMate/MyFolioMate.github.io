@@ -65,23 +65,16 @@ try {
       switch($req[0]) {
         case 'portfolio':
           $username = $req[1] ?? null;
-          $userId = $req[2] ?? null;
-          if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Handle portfolio update
-            $data = json_decode(file_get_contents("php://input"));
-            if ($userId && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $userId) {
-              echo encryptResponse($post->updatePortfolio($data));
-            } else {
-              echo encryptResponse([
-                "success" => false,
-                "error" => "Unauthorized",
-                "code" => 401
-              ]);
-            }
-          } else {
-            // Get portfolio
-            echo encryptResponse($get->getPortfolio($username, $userId));
+          if (!$username) {
+            echo encryptResponse([
+              "success" => false,
+              "error" => "Username is required",
+              "code" => 400
+            ]);
+            break;
           }
+          
+          echo encryptResponse($get->getPortfolio($username));
           break;
         
         case 'projects':
@@ -212,8 +205,31 @@ try {
           break;
 
         case 'updateportfolio':
-          echo encryptResponse($post->updatePortfolio((object)$data));
-        break;
+          if (isset($_SESSION['user_id'])) {
+            $data = decryptRequest();
+            if ($data === null) {
+              echo encryptResponse([
+                "success" => false,
+                "error" => "Invalid request data",
+                "code" => 400
+              ]);
+              break;
+            }
+            
+            // Convert array to object and add user_id
+            $data = (object)$data;
+            $data->user_id = $_SESSION['user_id'];
+            
+            $result = $post->updatePortfolio($data);
+            echo encryptResponse($result);
+          } else {
+            echo encryptResponse([
+              "success" => false,
+              "error" => "Unauthorized",
+              "code" => 401
+            ]);
+          }
+          break;
 
         case 'projects':
           // Handle adding new project
@@ -250,6 +266,33 @@ try {
             echo encryptResponse($post->addProject((object)$data));
           } else {
             echo encryptResponse(["error" => "Unauthorized", "code" => 401]);
+          }
+          break;
+
+        case 'createportfolio':
+          if (isset($_SESSION['user_id'])) {
+            $data = decryptRequest();
+            if ($data === null) {
+              echo encryptResponse([
+                "success" => false,
+                "error" => "Invalid request data",
+                "code" => 400
+              ]);
+              break;
+            }
+            
+            // Convert array to object and add user_id
+            $data = (object)$data;
+            $data->user_id = $_SESSION['user_id'];
+            
+            $result = $post->createPortfolio($data);
+            echo encryptResponse($result);
+          } else {
+            echo encryptResponse([
+              "success" => false,
+              "error" => "Unauthorized",
+              "code" => 401
+            ]);
           }
           break;
 

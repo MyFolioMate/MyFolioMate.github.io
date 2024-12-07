@@ -86,13 +86,10 @@ class Post {
             // Prepare skills insertion
             $insertSkillStmt = $this->pdo->prepare("INSERT INTO skills (user_id, skill, description) VALUES (?, ?, ?)");
             
-            // Ensure skills is an array
-            $skills = is_array($param->skills) ? $param->skills : [];
-
-            // Insert each skill
-            foreach ($skills as $skillData) {
-                $skill = $skillData['name'] ?? '';
-                $description = $skillData['description'] ?? '';
+            foreach ($param->skills as $skillData) {
+                // Handle both object and array access
+                $skill = is_object($skillData) ? $skillData->name : ($skillData['name'] ?? '');
+                $description = is_object($skillData) ? $skillData->description : ($skillData['description'] ?? '');
                 
                 if (!empty(trim($skill))) {
                     $insertSkillStmt->execute([
@@ -199,6 +196,109 @@ class Post {
             "error" => $th->getMessage(),
             "code" => $th->getCode()
         ];
+    }
+  }
+
+  public function createPortfolio($param) {
+    if (!$param || !isset($param->user_id) || !isset($param->title)) {
+      return array(
+        "success" => false,
+        "error" => "Missing required fields",
+        "code" => 400
+      );
+    }
+
+    try {
+      $this->pdo->beginTransaction();
+
+      // Insert main portfolio data
+      $sql = "INSERT INTO portfolios (
+        user_id, 
+        title, 
+        about,
+        contact_info,
+        theme_color,
+        design_template,
+        education,
+        achievements,
+        social_links
+      ) VALUES (
+        :user_id, 
+        :title, 
+        :about,
+        :contact_info,
+        :theme_color,
+        :design_template,
+        :education,
+        :achievements,
+        :social_links
+      )";
+
+      $stmt = $this->pdo->prepare($sql);
+      $stmt->execute([
+        ':user_id' => $param->user_id,
+        ':title' => $param->title,
+        ':about' => $param->about ?? '',
+        ':contact_info' => $param->contact_info ?? '',
+        ':theme_color' => $param->theme_color ?? '#000000',
+        ':design_template' => $param->design_template ?? 'classic',
+        ':education' => $param->education ?? '',
+        ':achievements' => $param->achievements ?? '',
+        ':social_links' => $param->social_links ?? ''
+      ]);
+
+      $portfolioId = $this->pdo->lastInsertId();
+
+      // Insert skills
+      if (!empty($param->skills)) {
+        $skillSql = "INSERT INTO skills (user_id, skill, description) VALUES (:user_id, :skill, :description)";
+        $skillStmt = $this->pdo->prepare($skillSql);
+        
+        foreach ($param->skills as $skill) {
+          $skillStmt->execute([
+            ':user_id' => $param->user_id,
+            ':skill' => $skill->name,
+            ':description' => $skill->description ?? ''
+          ]);
+        }
+      }
+
+      // Insert projects
+      if (!empty($param->projects)) {
+        $projectSql = "INSERT INTO projects (user_id, title, description, project_url) 
+                      VALUES (:user_id, :title, :description, :project_url)";
+        $projectStmt = $this->pdo->prepare($projectSql);
+        
+        foreach ($param->projects as $project) {
+          $projectStmt->execute([
+            ':user_id' => $param->user_id,
+            ':title' => $project->title,
+            ':description' => $project->description,
+            ':project_url' => $project->url
+          ]);
+        }
+      }
+
+      $this->pdo->commit();
+
+      // Get user data for redirect
+      $userStmt = $this->pdo->prepare("SELECT username FROM users WHERE id = ?");
+      $userStmt->execute([$param->user_id]);
+      $user = $userStmt->fetch();
+
+      return [
+        "success" => true,
+        "message" => "Portfolio created successfully",
+        "user_id" => $param->user_id,
+        "username" => $user['username']
+      ];
+    } catch (\Throwable $th) {
+      $this->pdo->rollBack();
+      return [
+        "success" => false,
+        "error" => $th->getMessage(),
+        "code" => 500
+      ];
     }
   }
 }

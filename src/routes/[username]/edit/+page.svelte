@@ -87,23 +87,21 @@
       });
       
       if (portfolioData && !portfolioData.error) {
-        title = portfolioData.title || 'My Portfolio';
-        about = portfolioData.about || 'Welcome to my portfolio';
+        title = portfolioData.data.title || 'My Portfolio';
+        about = portfolioData.data.about || 'Welcome to my portfolio';
         
-        // Load skills with descriptions
-        skills = Array.isArray(portfolioData.skills) 
-          ? portfolioData.skills.map(skill => ({
-              name: typeof skill === 'string' ? skill : skill.skill,
-              description: typeof skill === 'object' ? skill.description : ''
-            }))
-          : [];
+        // Load skills with descriptions - Fix the mapping here
+        skills = portfolioData.data.skills.map(skill => ({
+          name: skill.name || '',  // Use skill.name instead of skill.skill
+          description: skill.description || ''
+        }));
         
-        contact_info = portfolioData.contact_info || 'Email: ' + user.email;
-        theme_color = portfolioData.theme_color || '#000000';
-        design_template = portfolioData.design_template || 'classic';
-        education = portfolioData.education || '';
-        achievements = portfolioData.achievements || '';
-        social_links = portfolioData.social_links || '';
+        contact_info = portfolioData.data.contact_info || 'Email: ' + user.email;
+        theme_color = portfolioData.data.theme_color || '#000000';
+        design_template = portfolioData.data.design_template || 'classic';
+        education = portfolioData.data.education || '';
+        achievements = portfolioData.data.achievements || '';
+        social_links = portfolioData.data.social_links || '';
       }
 
       // Fetch projects specifically
@@ -132,17 +130,17 @@
       const data = await fetchApi('/api/updateportfolio', {
         method: 'POST',
         body: JSON.stringify({
-          user_id: user.id,
           title,
           about,
-          skills, // Send skills as an array of objects
+          skills,
           contact_info,
           theme_color,
           design_template,
           education,
           achievements,
           social_links
-        })
+        }),
+        credentials: 'include'
       });
 
       if (!data.success) {

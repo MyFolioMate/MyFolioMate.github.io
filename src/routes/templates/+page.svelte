@@ -1,31 +1,39 @@
 <script lang="ts">
   const templates = [
     {
-      id: 1,
-      name: 'Minimal',
-      description: 'Clean and minimalistic design perfect for creatives',
-      image: '/templates/minimal.jpg',
+      id: 'classic',
+      name: 'Classic',
+      description: 'A timeless design that works for any profession',
+      category: 'Professional'
+    },
+    {
+      id: 'modern',
+      name: 'Modern',
+      description: 'Contemporary layout with clean aesthetics',
       category: 'Creative'
     },
     {
-      id: 2,
-      name: 'Developer',
-      description: 'Optimized for showcasing coding projects and skills',
-      image: '/templates/developer.jpg',
-      category: 'Technical'
+      id: 'minimal',
+      name: 'Minimal',
+      description: 'Clean and minimalistic design',
+      category: 'Creative'
     },
     {
-      id: 3,
-      name: 'Professional',
-      description: 'Traditional layout ideal for business professionals',
-      image: '/templates/professional.jpg',
-      category: 'Business'
+      id: 'creative',
+      name: 'Creative',
+      description: 'Bold design for creative professionals',
+      category: 'Creative'
     },
-    // Add more templates as needed
+    {
+      id: 'corporate',
+      name: 'Corporate',
+      description: 'Professional design for business profiles',
+      category: 'Business'
+    }
   ];
 
   let selectedCategory = 'All';
-  const categories = ['All', 'Creative', 'Technical', 'Business'];
+  const categories = ['All', 'Professional', 'Creative', 'Business'];
 </script>
 
 <div class="container mx-auto px-4 py-8">
@@ -48,12 +56,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {#each templates.filter(t => selectedCategory === 'All' || t.category === selectedCategory) as template}
         <div class="bg-white rounded-lg shadow-sm overflow-hidden border hover:shadow-md transition">
-          <img
-            src={template.image}
-            alt={template.name}
-            class="w-full h-48 object-cover"
-          />
-          <div class="p-4">
+          <div class="p-6">
             <h3 class="text-xl font-semibold mb-2">{template.name}</h3>
             <p class="text-gray-600 mb-4">{template.description}</p>
             <div class="flex justify-between items-center">

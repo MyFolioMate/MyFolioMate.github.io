@@ -51,9 +51,9 @@ class Get {
       }
 
       // Fetch skills
-      $skillsStmt = $this->pdo->prepare("SELECT skill FROM skills WHERE user_id = ?");
+      $skillsStmt = $this->pdo->prepare("SELECT skill as name, description FROM skills WHERE user_id = ?");
       $skillsStmt->execute([$user['id']]);
-      $skills = $skillsStmt->fetchAll(\PDO::FETCH_COLUMN);
+      $skills = $skillsStmt->fetchAll(\PDO::FETCH_ASSOC);
 
       // Merge skills into portfolio data
       $portfolio['skills'] = $skills;
@@ -103,14 +103,21 @@ class Get {
   }
 
   public function getAllPortfolios() {
-    $sqlString = "SELECT u.username, u.full_name, p.title, p.about, p.theme_color, p.design_template
+    $sqlString = "SELECT 
+                    u.username, 
+                    u.full_name, 
+                    p.title, 
+                    p.about, 
+                    p.theme_color, 
+                    p.design_template,
+                    p.user_id
                   FROM users u 
                   JOIN portfolios p ON u.id = p.user_id 
                   ORDER BY u.created_at DESC";
     try {
       $stmt = $this->pdo->prepare($sqlString);
       $stmt->execute();
-      $portfolios = $stmt->fetchAll();
+      $portfolios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
       
       return array(
         "success" => true,
