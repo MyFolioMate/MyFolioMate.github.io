@@ -8,7 +8,9 @@
 	                 $page.url.pathname.startsWith('/profile') ||
 	                 $page.url.pathname.startsWith('/templates') ||
 	                 $page.url.pathname.startsWith('/privacy') ||
-	                 $page.url.pathname.startsWith('/terms');
+	                 $page.url.pathname.startsWith('/terms') ||
+	                 $page.url.pathname.startsWith('/login') ||
+	                 $page.url.pathname.startsWith('/register');
 </script>
 
 {#if isMainRoute}
