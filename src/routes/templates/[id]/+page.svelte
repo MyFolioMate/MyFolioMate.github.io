@@ -57,12 +57,6 @@
     <div class="container mx-auto px-4">
       <div class="flex justify-between items-center h-16">
         <h1 class="text-xl font-semibold">Template Preview: {templateId}</h1>
-        <a 
-          href="/create-portfolio" 
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Use This Template
-        </a>
       </div>
     </div>
   </div>

@@ -46,10 +46,10 @@
         </p>
         <div class="flex justify-center gap-4">
           <a 
-            href="/create-portfolio" 
+            href="/register" 
             class="px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition"
           >
-            Create Portfolio
+            Get Started
           </a>
           <a 
             href="/templates" 

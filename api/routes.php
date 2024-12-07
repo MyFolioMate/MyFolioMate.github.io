@@ -120,12 +120,6 @@ try {
           echo encryptResponse(['success' => true]);
         break;
         case 'session-verify':
-          if (!isset($_SESSION['user_id'])) {
-              http_response_code(401);
-              echo json_encode(['error' => 'Unauthorized']);
-              break;
-          }
-
           // Generate keys as before
           $tempKey = random_bytes(32);
           $iv = random_bytes(16);
@@ -147,13 +141,12 @@ try {
 
           // Obfuscate the response
           $bytes = unpack('C*', $response);
-          $mask = [0x5A, 0xF3, 0xE2, 0x1D]; // Same mask as client
+          $mask = [0x5A, 0xF3, 0xE2, 0x1D];
           
           for ($i = 1; $i <= count($bytes); $i++) {
               $bytes[$i] ^= $mask[($i - 1) % count($mask)];
           }
           
-          // Send obfuscated response
           header('Content-Type: application/octet-stream');
           echo pack('C*', ...$bytes);
           break;
