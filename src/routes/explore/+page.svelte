@@ -98,6 +98,8 @@
                   <span class="text-sm text-blue-500">{portfolio.template}</span>
                   <a
                     href={`/${portfolio.username}/${portfolio.user_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
                   >
                     View Portfolio

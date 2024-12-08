@@ -255,10 +255,14 @@ class Post {
         $skillStmt = $this->pdo->prepare($skillSql);
         
         foreach ($param->skills as $skill) {
+          // Handle both object and array formats
+          $skillName = is_array($skill) ? $skill['name'] : $skill->name;
+          $skillDescription = is_array($skill) ? $skill['description'] : $skill->description;
+          
           $skillStmt->execute([
             ':user_id' => $param->user_id,
-            ':skill' => $skill->name,
-            ':description' => $skill->description ?? ''
+            ':skill' => $skillName,
+            ':description' => $skillDescription ?? ''
           ]);
         }
       }
@@ -270,11 +274,16 @@ class Post {
         $projectStmt = $this->pdo->prepare($projectSql);
         
         foreach ($param->projects as $project) {
+          // Handle both object and array formats
+          $projectTitle = is_array($project) ? $project['title'] : $project->title;
+          $projectDescription = is_array($project) ? $project['description'] : $project->description;
+          $projectUrl = is_array($project) ? $project['url'] : $project->url;
+          
           $projectStmt->execute([
             ':user_id' => $param->user_id,
-            ':title' => $project->title,
-            ':description' => $project->description,
-            ':project_url' => $project->url
+            ':title' => $projectTitle,
+            ':description' => $projectDescription,
+            ':project_url' => $projectUrl
           ]);
         }
       }
@@ -291,6 +300,76 @@ class Post {
         "message" => "Portfolio created successfully",
         "user_id" => $param->user_id,
         "username" => $user['username']
+      ];
+    } catch (\Throwable $th) {
+      $this->pdo->rollBack();
+      return [
+        "success" => false,
+        "error" => $th->getMessage(),
+        "code" => 500
+      ];
+    }
+  }
+
+  public function updateProfile($param) {
+    try {
+      $stmt = $this->pdo->prepare("
+        UPDATE users 
+        SET full_name = ?, email = ?, username = ?
+        WHERE id = ?
+      ");
+      
+      $stmt->execute([
+        $param->full_name,
+        $param->email,
+        $param->username,
+        $param->user_id
+      ]);
+
+      // Update session data
+      $_SESSION['username'] = $param->username;
+      $_SESSION['email'] = $param->email;
+
+      return [
+        "success" => true,
+        "message" => "Profile updated successfully",
+        "user" => [
+          "id" => $param->user_id,
+          "username" => $param->username,
+          "email" => $param->email,
+          "full_name" => $param->full_name
+        ]
+      ];
+    } catch (\Throwable $th) {
+      return [
+        "success" => false,
+        "error" => $th->getMessage(),
+        "code" => 500
+      ];
+    }
+  }
+
+  public function deletePortfolio($userId) {
+    try {
+      $this->pdo->beginTransaction();
+
+      // Delete skills
+      $stmt = $this->pdo->prepare("DELETE FROM skills WHERE user_id = ?");
+      $stmt->execute([$userId]);
+
+      // Delete projects
+      $stmt = $this->pdo->prepare("DELETE FROM projects WHERE user_id = ?");
+      $stmt->execute([$userId]);
+
+      // Delete portfolio
+      $stmt = $this->pdo->prepare("DELETE FROM portfolios WHERE user_id = ?");
+      $stmt->execute([$userId]);
+
+      $this->pdo->commit();
+
+      return [
+        "success" => true,
+        "message" => "Portfolio deleted successfully"
       ];
     } catch (\Throwable $th) {
       $this->pdo->rollBack();

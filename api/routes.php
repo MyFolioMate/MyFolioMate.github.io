@@ -106,15 +106,16 @@ try {
         break;
         case 'user':
           if (isset($_SESSION['user_id'])) {
-              echo encryptResponse([
-                  'id' => $_SESSION['user_id'],
-                  'username' => $_SESSION['username'],
-                  'email' => $_SESSION['email']
-              ]);
+            $userData = $get->getCurrentUser();
+            if (isset($userData['error'])) {
+              echo encryptResponse(['error' => $userData['error']]);
+            } else {
+              echo encryptResponse($userData);
+            }
           } else {
-              echo encryptResponse(['error' => 'Not authenticated']);
+            echo encryptResponse(['error' => 'Not authenticated']);
           }
-        break;
+          break;
         case 'logout':
           session_destroy();
           echo encryptResponse(['success' => true]);
@@ -289,6 +290,31 @@ try {
           }
           break;
 
+        case 'updateprofile':
+          if (isset($_SESSION['user_id'])) {
+            $data = decryptRequest();
+            if ($data === null) {
+              echo encryptResponse([
+                "success" => false,
+                "error" => "Invalid request data",
+                "code" => 400
+              ]);
+              break;
+            }
+            
+            $data = (object)$data;
+            $data->user_id = $_SESSION['user_id'];
+            
+            echo encryptResponse($post->updateProfile($data));
+          } else {
+            echo encryptResponse([
+              "success" => false,
+              "error" => "Unauthorized",
+              "code" => 401
+            ]);
+          }
+          break;
+
         default:
           echo encryptResponse(["error" => "Invalid endpoint"]);
       }
@@ -321,6 +347,17 @@ try {
 
     case 'DELETE':
       switch($req[0]) {
+        case 'deleteportfolio':
+          if (isset($_SESSION['user_id'])) {
+            echo encryptResponse($post->deletePortfolio($_SESSION['user_id']));
+          } else {
+            echo encryptResponse([
+              "success" => false,
+              "error" => "Unauthorized",
+              "code" => 401
+            ]);
+          }
+          break;
         case 'projects':
           // Handle deleting project
           if (isset($_SESSION['user_id'])) {

@@ -4,138 +4,284 @@
   import { fetchApi } from '$lib/api';
 
   let user: any = null;
-  let portfolio: any = null;
-  let error: string | null = null;
   let loading = true;
+  let error: string | null = null;
+  let success: string | null = null;
+  let isEditing = false;
 
-  async function checkAuth() {
+  // Editable fields
+  let editableUser = {
+    full_name: '',
+    email: '',
+    username: ''
+  };
+
+  let showDeleteModal = false;
+  let hasPortfolio = false;
+
+  onMount(async () => {
     try {
-      const data = await fetchApi('/api/user', {
+      const userData = await fetchApi('/api/user', {
         credentials: 'include'
       });
       
-      if (data.error) {
-        throw new Error(data.error);
+      if (userData.error) {
+        goto('/login');
+        return;
       }
       
-      user = data;
-      await checkPortfolio();
+      user = userData;
+      editableUser = {
+        full_name: userData.full_name,
+        email: userData.email,
+        username: userData.username
+      };
+
+      // Check if user has a portfolio
+      const portfolioData = await fetchApi(`/api/portfolio/${userData.username}`, {
+        credentials: 'include'
+      });
+      hasPortfolio = portfolioData.success;
+
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Authentication failed';
-      goto('/login');
+      error = e instanceof Error ? e.message : 'Failed to load user data';
     } finally {
       loading = false;
     }
-  }
+  });
 
-  async function checkPortfolio() {
+  async function handleUpdateProfile(e: SubmitEvent) {
+    e.preventDefault();
+    error = null;
+    success = null;
+
     try {
-      const data = await fetchApi(`/api/portfolio/${user.username}`, {
+      const data = await fetchApi('/api/updateprofile', {
+        method: 'POST',
+        body: JSON.stringify(editableUser),
+        credentials: 'include'
+      });
+
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+
+      // Update both user and editableUser with the returned data
+      user = data.user;
+      editableUser = {
+        full_name: data.user.full_name,
+        email: data.user.email,
+        username: data.user.username
+      };
+
+      success = 'Profile updated successfully';
+      isEditing = false;
+
+      // Force reload user data from server
+      const userData = await fetchApi('/api/user', {
         credentials: 'include'
       });
       
-      if (data.success) {
-        portfolio = data.data;
-      } else {
-        throw new Error(data.error || 'Failed to fetch portfolio');
+      if (!userData.error) {
+        user = userData;
       }
     } catch (e) {
-      console.error('Failed to fetch portfolio:', e);
-      portfolio = null;
+      error = e instanceof Error ? e.message : 'Failed to update profile';
     }
   }
 
-  onMount(checkAuth);
+  async function handleDeletePortfolio() {
+    try {
+      const data = await fetchApi('/api/deleteportfolio', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
 
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+
+      success = 'Portfolio deleted successfully';
+      showDeleteModal = false;
+      hasPortfolio = false;
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to delete portfolio';
+    }
+  }
+
+  // Add logout function
   async function handleLogout() {
     try {
       const data = await fetchApi('/api/logout', {
         credentials: 'include'
       });
-      goto('/');
+
+      if (data.success) {
+        goto('/login');
+      }
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Logout failed';
+      error = e instanceof Error ? e.message : 'Failed to logout';
     }
   }
 </script>
 
-{#if loading}
-  <div class="flex justify-center items-center min-h-screen">
-    <div class="text-gray-600">Loading...</div>
-  </div>
-{:else if error}
-  <div class="container mx-auto px-4 py-8">
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-      {error}
-    </div>
-  </div>
-{:else}
-  <div class="container mx-auto px-4 py-8">
-    <div class="max-w-4xl mx-auto">
-      <div class="bg-white shadow rounded-lg">
-        <!-- Profile Header -->
-        <div class="px-6 py-4 border-b border-gray-200">
-          <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-900">Profile</h1>
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-3xl mx-auto">
+    {#if loading}
+      <div class="text-center py-8">Loading...</div>
+    {:else if error}
+      <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+        <p>{error}</p>
+      </div>
+    {:else if user}
+      <!-- Success Message -->
+      {#if success}
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+          <p>{success}</p>
+        </div>
+      {/if}
+
+      <!-- Profile Header -->
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-center mb-6">
+          <h1 class="text-2xl font-bold">My Profile</h1>
+          <div class="flex gap-4">
+            <button
+              on:click={() => isEditing = !isEditing}
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              {isEditing ? 'Cancel' : 'Edit Profile'}
+            </button>
             <button
               on:click={handleLogout}
-              class="px-4 py-2 text-red-600 hover:text-red-800 transition-colors"
+              class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
             >
               Logout
             </button>
           </div>
         </div>
 
-        {#if user}
-          <!-- User Info -->
-          <div class="px-6 py-4 border-b border-gray-200">
-            <div class="space-y-4">
-              <div>
-                <h2 class="text-lg font-medium text-gray-900">Username</h2>
-                <p class="mt-1 text-gray-600">{user.username}</p>
-              </div>
-              <div>
-                <h2 class="text-lg font-medium text-gray-900">Email</h2>
-                <p class="mt-1 text-gray-600">{user.email}</p>
-              </div>
-              <div>
-                <h2 class="text-lg font-medium text-gray-900">Full Name</h2>
-                <p class="mt-1 text-gray-600">{user.full_name}</p>
-              </div>
+        {#if isEditing}
+          <!-- Edit Form -->
+          <form on:submit={handleUpdateProfile} class="space-y-4">
+            <div>
+              <label for="full_name" class="block text-sm font-medium text-gray-700">Full Name</label>
+              <input
+                id="full_name"
+                type="text"
+                bind:value={editableUser.full_name}
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              />
             </div>
-          </div>
 
-          <!-- Portfolio Management -->
-          <div class="px-6 py-4">
-            <div class="flex justify-between items-center">
-              <h2 class="text-lg font-medium text-gray-900">Portfolio</h2>
-              {#if portfolio}
-                <div class="space-x-4">
-                  <a 
-                    href="/{user.username}/{user.id}" 
-                    target="_blank"
-                    class="inline-block px-4 py-2 text-blue-600 hover:text-blue-800"
-                  >
-                    View Portfolio
-                  </a>
-                  <a 
-                    href="/{user.username}/edit" 
-                    class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Manage Portfolio
-                  </a>
-                </div>
-              {:else}
-                <a 
-                  href="/create-portfolio" 
-                  class="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  Create Portfolio
-                </a>
-              {/if}
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+              <input
+                id="username"
+                type="text"
+                bind:value={editableUser.username}
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              />
+            </div>
+
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                id="email"
+                type="email"
+                bind:value={editableUser.email}
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              />
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        {:else}
+          <!-- Profile Display -->
+          <div class="space-y-4">
+            <div>
+              <h3 class="text-sm font-medium text-gray-500">Full Name</h3>
+              <p class="mt-1 text-lg text-gray-900">{user.full_name}</p>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-medium text-gray-500">Username</h3>
+              <p class="mt-1 text-lg text-gray-900">{user.username}</p>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-medium text-gray-500">Email</h3>
+              <p class="mt-1 text-lg text-gray-900">{user.email}</p>
             </div>
           </div>
         {/if}
+      </div>
+
+      <!-- Portfolio Actions -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Portfolio Management</h2>
+        <div class="flex gap-4">
+          {#if hasPortfolio}
+            <a
+              href={`/${user.username}/edit`}
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              Edit Portfolio
+            </a>
+            <a
+              href={`/${user.username}/${user.id}`}
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              View Portfolio
+            </a>
+            <button
+              on:click={() => showDeleteModal = true}
+              class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+            >
+              Delete Portfolio
+            </button>
+          {:else}
+            <a
+              href="/create-portfolio"
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              Create Portfolio
+            </a>
+          {/if}
+        </div>
+      </div>
+    {/if}
+  </div>
+</div>
+
+<!-- Add the delete confirmation modal -->
+{#if showDeleteModal}
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md mx-4">
+      <h3 class="text-xl font-bold mb-4">Delete Portfolio</h3>
+      <p class="text-gray-600 mb-6">
+        Are you sure you want to delete your portfolio? This action cannot be undone.
+      </p>
+      <div class="flex justify-end gap-4">
+        <button
+          on:click={() => showDeleteModal = false}
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+        >
+          Cancel
+        </button>
+        <button
+          on:click={handleDeletePortfolio}
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+        >
+          Delete Portfolio
+        </button>
       </div>
     </div>
   </div>

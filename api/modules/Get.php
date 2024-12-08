@@ -143,7 +143,7 @@ class Get {
     try {
       $stmt = $this->pdo->prepare($sqlString);
       $stmt->execute([$_SESSION['user_id']]);
-      $user = $stmt->fetch();
+      $user = $stmt->fetch(\PDO::FETCH_ASSOC);
       
       if (!$user) {
         return array(
@@ -152,7 +152,13 @@ class Get {
         );
       }
       
-      return $user;
+      // Return user data in the same format as updateProfile
+      return [
+        "id" => $user['id'],
+        "username" => $user['username'],
+        "email" => $user['email'],
+        "full_name" => $user['full_name']
+      ];
     } catch (\Throwable $th) {
       return array(
         "error" => $th->getMessage(),

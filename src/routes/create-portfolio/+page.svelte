@@ -84,7 +84,7 @@
       }
 
       success = 'Portfolio created successfully';
-      goto(`/${data.username}/${data.user_id}`);
+      goto('/profile');
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to create portfolio';
     } finally {
