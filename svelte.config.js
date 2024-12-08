@@ -5,10 +5,11 @@ import preprocess from 'svelte-preprocess';
 const config = {
 	kit: {
 		adapter: adapter({
-			pages: 'build',
-			assets: 'build',
-			fallback: 'undefined',
-			precompress: false
+			pages: "build",
+			assets: "build",
+			fallback: undefined,
+			precompress: false,
+			strict: true
 		}),
 		prerender: {
 			handleMissingId: 'ignore'
