@@ -7,26 +7,19 @@ class Get {
   }
 
   public function getPortfolio($username, $userId = null) {
-    if (!$username) {
+    if (!$username || !$userId) {
       return array(
         "success" => false,
-        "error" => "Username is required",
+        "error" => "Username and user ID are required",
         "code" => 400
       );
     }
 
     try {
       // Check if both username and ID match
-      $sql = "SELECT id, username, full_name, email FROM users WHERE username = ?";
-      $params = [$username];
-      
-      if ($userId !== null) {
-        $sql .= " AND id = ?";
-        $params[] = $userId;
-      }
-      
+      $sql = "SELECT id, username, full_name, email FROM users WHERE username = ? AND id = ?";
       $userCheck = $this->pdo->prepare($sql);
-      $userCheck->execute($params);
+      $userCheck->execute([$username, $userId]);
       $user = $userCheck->fetch(\PDO::FETCH_ASSOC);
 
       if (!$user) {

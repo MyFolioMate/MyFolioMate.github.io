@@ -4,7 +4,7 @@ import type { PageLoad } from './$types.js';
 const validTemplates = ['classic', 'modern', 'minimal', 'creative', 'corporate'] as const;
 type TemplateId = typeof validTemplates[number];
 
-export const prerender = false;
+export const prerender = true;
 
 export const load = (({ params }) => {
   const templateId = params.id.toLowerCase();

@@ -5,7 +5,6 @@
   import { fetchApi } from '$lib/api';
 
   const username = $page.params.username;
-  const id = $page.params.id;
   let error: string | null = null;
   let success: string | null = null;
   let loading = true;
@@ -82,7 +81,7 @@
       
       user = userData;
 
-      const portfolioData = await fetchApi(`/api/portfolio/${username}`, {
+      const portfolioData = await fetchApi(`/api/portfolio/${username}/${userData.id}`, {
         credentials: 'include'
       });
       
@@ -105,7 +104,7 @@
       }
 
       // Fetch projects specifically
-      const projectsData = await fetchApi(`/api/projects/${username}`);
+      const projectsData = await fetchApi(`/api/projects/${username}/${userData.id}`);
       
       if (projectsData.success) {
         projects = projectsData.data || [];

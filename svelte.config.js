@@ -13,7 +13,12 @@ const config = {
 		}),
 		prerender: {
 			handleMissingId: 'ignore',
-			entries: ['*']
+			entries: ['*'],
+			handleHttpError: ({ path, referrer, message }) => {
+				// Ignore 404s
+				if (message.includes('Not found')) return;
+				throw new Error(message);
+			}
 		}
 	},
 	preprocess: preprocess({

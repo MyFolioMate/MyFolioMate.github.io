@@ -37,11 +37,13 @@
         username: userData.username
       };
 
-      // Check if user has a portfolio
-      const portfolioData = await fetchApi(`/api/portfolio/${userData.username}`, {
+      // Check if user has a portfolio - Fix the portfolio check
+      const portfolioData = await fetchApi(`/api/portfolio/${userData.username}/${userData.id}`, {
         credentials: 'include'
       });
-      hasPortfolio = portfolioData.success;
+      
+      // Update the check to properly handle portfolio existence
+      hasPortfolio = portfolioData.success && portfolioData.data;
 
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load user data';
