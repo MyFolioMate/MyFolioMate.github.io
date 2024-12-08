@@ -25,12 +25,16 @@
   
     onMount(async () => {
       try {
+        if (!/^\d+$/.test(id)) {
+          throw new Error('Invalid portfolio ID');
+        }
+
         const portfolioData = await fetchApi(`/api/portfolio/${username}/${id}`, {
           credentials: 'include'
         });
         
-        if (!portfolioData.success) {
-          throw new Error(portfolioData.error || 'Failed to fetch portfolio data');
+        if (!portfolioData.success || portfolioData.data.user.id !== parseInt(id)) {
+          throw new Error('Portfolio not found');
         }
         
         portfolio = {
@@ -52,9 +56,7 @@
         }
       } catch (e) {
         error = e instanceof Error ? e.message : 'Failed to load portfolio';
-        if (error === 'Portfolio not found') {
-          goto('/404');
-        }
+        goto('/404');
       } finally {
         loading = false;
       }

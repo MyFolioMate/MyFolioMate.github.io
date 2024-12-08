@@ -16,11 +16,11 @@ class Get {
     }
 
     try {
-      // First check if user exists with both username and id if provided
+      // Check if both username and ID match
       $sql = "SELECT id, username, full_name, email FROM users WHERE username = ?";
       $params = [$username];
       
-      if ($userId) {
+      if ($userId !== null) {
         $sql .= " AND id = ?";
         $params[] = $userId;
       }

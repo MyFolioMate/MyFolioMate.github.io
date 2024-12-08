@@ -65,16 +65,19 @@ try {
       switch($req[0]) {
         case 'portfolio':
           $username = $req[1] ?? null;
-          if (!$username) {
+          $userId = $req[2] ?? null;
+          
+          if (!$username || !$userId || !is_numeric($userId)) {
             echo encryptResponse([
               "success" => false,
-              "error" => "Username is required",
+              "error" => "Invalid portfolio request",
               "code" => 400
             ]);
             break;
           }
           
-          echo encryptResponse($get->getPortfolio($username));
+          // Verify both username and user ID match
+          echo encryptResponse($get->getPortfolio($username, $userId));
           break;
         
         case 'projects':
@@ -88,15 +91,15 @@ try {
           }
           
           $username = $req[1];
-          $userId = $get->getUserIdByUsername($username);
+          $userId = $req[2] ?? null;
           
-          if (!$userId) {
-              echo encryptResponse([
-                  "success" => false,
-                  "error" => "User not found",
-                  "code" => 404
-              ]);
-              break;
+          if (!$userId || !is_numeric($userId)) {
+            echo encryptResponse([
+              "success" => false,
+              "error" => "Invalid user ID",
+              "code" => 400
+            ]);
+            break;
           }
           
           echo encryptResponse($get->getProjects($username, $userId));
