@@ -10,9 +10,7 @@ const config = {
 		}
 	},
 	preprocess: preprocess({
-		postcss: {
-			configFilePath: './postcss.config.cjs'
-		}
+		postcss: true
 	})
 };
 
