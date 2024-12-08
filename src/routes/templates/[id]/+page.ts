@@ -1,10 +1,19 @@
+import type { PageLoad } from './$types.js';
+
+// Define valid template IDs
+const validTemplates = ['classic', 'modern', 'minimal', 'creative', 'corporate'] as const;
+type TemplateId = typeof validTemplates[number];
+
 export const prerender = false;
 
-// Optional: If you want to generate specific templates
-export const entries = [
-  { id: 'classic' },
-  { id: 'modern' },
-  { id: 'minimal' },
-  { id: 'creative' },
-  { id: 'corporate' }
-]; 
+export const load = (({ params }) => {
+  const templateId = params.id.toLowerCase();
+  
+  if (!validTemplates.includes(templateId as TemplateId)) {
+    throw new Error('Invalid template ID');
+  }
+
+  return {
+    templateId
+  };
+}) satisfies PageLoad; 

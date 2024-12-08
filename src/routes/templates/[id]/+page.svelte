@@ -39,7 +39,7 @@
     social_links: 'github.com/johndoe, linkedin.com/in/johndoe'
   };
 
-  const templates = {
+  const templates: Record<string, any> = {
     classic: Classic,
     modern: Modern,
     minimal: Minimal,
@@ -48,7 +48,7 @@
   };
 
   const templateId = $page.params.id.toLowerCase();
-  const SelectedTemplate = templates[templateId];
+  const SelectedTemplate = templates[templateId as keyof typeof templates];
 </script>
 
 <div class="min-h-screen bg-gray-50">
@@ -65,8 +65,11 @@
   {#if SelectedTemplate}
     <svelte:component this={SelectedTemplate} portfolio={previewData} projects={previewData.projects} />
   {:else}
-    <div class="container mx-auto px-4 py-8">
-      <p class="text-red-500">Template not found</p>
+    <div class="container mx-auto px-4 py-16 text-center">
+      <h1 class="text-2xl font-bold text-red-600">Template not found</h1>
+      <a href="/templates" class="text-blue-600 hover:underline mt-4 inline-block">
+        Back to templates
+      </a>
     </div>
   {/if}
 </div> 
