@@ -1,6 +1,4 @@
 import adapter from '@sveltejs/adapter-auto';
-import { preprocessMeltUI } from '@melt-ui/pp';
-import sequence from 'svelte-sequential-preprocessor';
 import preprocess from 'svelte-preprocess';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -11,10 +9,11 @@ const config = {
 			handleMissingId: 'ignore'
 		}
 	},
-	preprocess: sequence([
-		preprocess(),
-		preprocessMeltUI()
-	])
+	preprocess: preprocess({
+		postcss: {
+			configFilePath: './postcss.config.cjs'
+		}
+	})
 };
 
 export default config;

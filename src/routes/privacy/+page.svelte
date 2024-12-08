@@ -1,5 +1,4 @@
 <script lang="ts">
-  import LegalHeader from '$lib/components/LegalHeader.svelte';
 </script>
 
 <div class="min-h-screen bg-gray-50">
