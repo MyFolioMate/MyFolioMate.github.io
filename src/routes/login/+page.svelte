@@ -12,7 +12,8 @@
       const data = await fetchApi('/api/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
-        credentials: 'include'
+        credentials: 'include',
+        encrypt: true
       });
 
       if (data.error) {

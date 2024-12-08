@@ -1,17 +1,28 @@
 import { encryptRequest, decryptResponse } from './crypto.js';
 
-export async function fetchApi(url: string, options: RequestInit = {}) {
+interface FetchOptions extends RequestInit {
+  encrypt?: boolean;
+}
+
+export async function fetchApi(url: string, options: FetchOptions = {}) {
     try {
         const isPost = options.method === 'POST' || options.method === 'PUT';
-        const isAuthEndpoint = url.includes('/login') || url.includes('/register');
+        const shouldEncrypt = options.encrypt || !url.includes('/session-verify');
         
-        if (isPost && options.body && !isAuthEndpoint) {
-            options.body = await encryptRequest(JSON.parse(options.body as string));
+        // Handle request body encryption
+        if (isPost && options.body) {
+            const bodyData = JSON.parse(options.body as string);
+            options.body = shouldEncrypt 
+                ? await encryptRequest(bodyData)
+                : JSON.stringify(bodyData);
         }
         
+        // Set appropriate headers
         const headers = {
             ...options.headers,
-            'Content-Type': isAuthEndpoint ? 'application/json' : 'application/x-encrypted-json'
+            'Content-Type': shouldEncrypt 
+                ? 'application/x-encrypted-json'
+                : 'application/json'
         };
         
         const response = await fetch(url, { ...options, headers });
@@ -22,15 +33,15 @@ export async function fetchApi(url: string, options: RequestInit = {}) {
         
         const responseData = await response.text();
         
-        if (url.includes('/login')) {
-            try {
-                return await decryptResponse(responseData);
-            } catch {
-                return JSON.parse(responseData);
-            }
+        // Handle response decryption
+        try {
+            return shouldEncrypt 
+                ? await decryptResponse(responseData)
+                : JSON.parse(responseData);
+        } catch (e) {
+            console.error('Response processing error:', e);
+            return JSON.parse(responseData);
         }
-        
-        return isAuthEndpoint ? JSON.parse(responseData) : await decryptResponse(responseData);
     } catch (error) {
         console.error('API Error:', error);
         throw error;

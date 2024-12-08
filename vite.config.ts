@@ -6,9 +6,10 @@ export default defineConfig({
 	server: {
 		proxy: {
 			'/api': {
-				target: 'http://localhost/myfoliomate.github.io/api/',
+				target: 'https://formalytics.me/api-myfolio/',
 				changeOrigin: true,
-				rewrite: (path) => path.replace(/^\/api/, '')
+				rewrite: (path) => path.replace(/^\/api/, ''),
+				secure: true
 			}
 		}
 	}

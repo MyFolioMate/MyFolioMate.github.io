@@ -237,6 +237,8 @@
             </a>
             <a
               href={`/${user.username}/${user.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
               class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
             >
               View Portfolio

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import PortfolioFooter from './PortfolioFooter.svelte';
+  import ScrollToTop from '../ScrollToTop.svelte';
   export let portfolio;
   export let projects;
 </script>
@@ -162,4 +164,7 @@
       </div>
     </div>
   </section>
+
+  <PortfolioFooter {portfolio} theme_color={portfolio.theme_color} />
+  <ScrollToTop />
 </main> 

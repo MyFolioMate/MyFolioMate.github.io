@@ -177,24 +177,47 @@ try {
 
       switch($req[0]) {
         case 'register':
-          // Don't encrypt the response for register
-          echo json_encode($post->createUser((object)$data));
-        break;
+          try {
+            $data = decryptRequest();  // Try to decrypt first
+            if ($data === null) {
+              // Fallback to non-encrypted for backward compatibility
+              $data = json_decode(file_get_contents("php://input"), true);
+            }
+            
+            echo encryptResponse($post->createUser((object)$data));
+          } catch (\Throwable $th) {
+            echo encryptResponse([
+              "error" => $th->getMessage(),
+              "code" => 500
+            ]);
+          }
+          break;
 
         case 'login':
-          $result = $auth->login($data['email'], $data['password']);
-          
-          if (!isset($result['error'])) {
+          try {
+            $data = decryptRequest();  // Try to decrypt first
+            if ($data === null) {
+              // Fallback to non-encrypted for backward compatibility
+              $data = json_decode(file_get_contents("php://input"), true);
+            }
+            
+            $result = $auth->login($data['email'], $data['password']);
+            
+            if (!isset($result['error'])) {
               $_SESSION['user_id'] = $result['id'];
               $_SESSION['username'] = $result['username'];
               $_SESSION['email'] = $result['email'];
               $_SESSION['created_at'] = time();
               
-              // Encrypt successful login response
               echo encryptResponse($result);
-          } else {
-              // Don't encrypt error responses
-              echo json_encode($result);
+            } else {
+              echo encryptResponse($result);
+            }
+          } catch (\Throwable $th) {
+            echo encryptResponse([
+              "error" => $th->getMessage(),
+              "code" => 500
+            ]);
           }
           break;
 

@@ -6,3 +6,5 @@ export const load: PageLoad = ({ params }) => {
     id: params.id
   };
 };
+
+export const prerender = false;

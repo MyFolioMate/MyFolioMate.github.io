@@ -18,7 +18,8 @@
           email,
           password,
           full_name
-        })
+        }),
+        encrypt: true
       });
 
       if (!data.success) {

@@ -11,24 +11,34 @@ class Connection {
     private $pass;
     
     public function __construct() {
-        $this->host = $_ENV['DB_HOST'];
-        $this->dbname = $_ENV['DB_NAME'];
-        $this->user = $_ENV['DB_USER'];
-        $this->pass = $_ENV['DB_PASS'];
+        $this->host = $_ENV['DB_HOST'] ?? null;
+        $this->dbname = $_ENV['DB_NAME'] ?? null;
+        $this->user = $_ENV['DB_USER'] ?? null;
+        $this->pass = $_ENV['DB_PASS'] ?? null;
+        
+        // Validate configuration
+        if (!$this->host || !$this->dbname || !$this->user || !$this->pass) {
+            throw new Exception("Missing database configuration. Please check your .env file.");
+        }
     }
 
     public function connect() {
         try {
-            $conn = new PDO(
-                "mysql:host={$this->host};dbname={$this->dbname}",
-                $this->user,
-                $this->pass
-            );
-            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $dsn = "mysql:host={$this->host};dbname={$this->dbname};charset=utf8mb4";
+            $options = [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_TIMEOUT => 5, // 5 seconds timeout
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
+            ];
+            
+            $conn = new PDO($dsn, $this->user, $this->pass, $options);
             return $conn;
         } catch(PDOException $e) {
-            echo "Connection Error: " . $e->getMessage();
-            return null;
+            error_log("Database Connection Error: " . $e->getMessage());
+            error_log("DSN: mysql:host={$this->host};dbname={$this->dbname}");
+            error_log("User: {$this->user}");
+            throw $e; // Re-throw the exception for handling upstream
         }
     }
 }

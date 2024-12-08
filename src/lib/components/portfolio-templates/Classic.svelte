@@ -1,6 +1,7 @@
 <script lang="ts">
     import PortfolioHeader from './PortfolioHeader.svelte';
     import PortfolioFooter from './PortfolioFooter.svelte';
+    import ScrollToTop from '../ScrollToTop.svelte';
     export let portfolio;
     export let projects;
   </script>
@@ -28,6 +29,15 @@
           </nav>
         </div>
       </header>
+  
+      <section id="about" class="mb-12 bg-white p-8 rounded-lg shadow-sm">
+        <h1 class="text-3xl font-bold mb-4" style="color: {portfolio.theme_color}">
+          {portfolio.title}
+        </h1>
+        <div class="prose max-w-none text-gray-700">
+          {@html portfolio.about}
+        </div>
+      </section>
   
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <section class="bg-gray-50 p-8 rounded-lg">
@@ -97,3 +107,6 @@
       </section>
     </div>
   </div>
+
+  <PortfolioFooter {portfolio} theme_color={portfolio.theme_color} />
+  <ScrollToTop />
