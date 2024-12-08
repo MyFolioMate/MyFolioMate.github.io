@@ -4,9 +4,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "vite build && mkdir -p build && cp -r .svelte-kit/output/client/* build/",
 		"preview": "vite preview",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"prepare": "svelte-kit sync"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
