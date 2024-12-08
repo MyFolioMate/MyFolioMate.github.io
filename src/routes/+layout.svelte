@@ -19,7 +19,7 @@
     <nav class="bg-white shadow-sm">
       <div class="container mx-auto px-4">
         <div class="flex justify-between items-center h-16">
-          <a href="/" class="text-xl font-bold text-gray-800">Portfolio Hub</a>
+          <a href="/" class="text-xl font-bold text-gray-800">My Folio Hub</a>
           <div class="flex items-center gap-6">
             <a href="/explore" class="text-gray-600 hover:text-gray-900">Explore</a>
             <a href="/templates" class="text-gray-600 hover:text-gray-900">Templates</a>
