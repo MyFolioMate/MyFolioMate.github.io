@@ -11,7 +11,12 @@
     theme_color: string;
     education: string;
     achievements: string;
-    social_links: string;
+    social_links: {
+      github?: string;
+      linkedin?: string;
+      twitter?: string;
+      [key: string]: string | undefined;
+    };
     user: {
       full_name: string;
       email: string;

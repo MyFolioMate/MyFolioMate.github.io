@@ -13,7 +13,20 @@ const config = {
 		}),
 		prerender: {
 			handleMissingId: 'ignore',
-			entries: ['*'],
+			entries: [
+				'/',
+				'/templates',
+				'/templates/classic',
+				'/templates/modern',
+				'/templates/minimal',
+				'/templates/creative',
+				'/templates/corporate',
+				'/explore',
+				'/login',
+				'/register',
+				'/privacy',
+				'/terms'
+			],
 			handleHttpError: ({ path, referrer, message }) => {
 				// Ignore 404s
 				if (message.includes('Not found')) return;

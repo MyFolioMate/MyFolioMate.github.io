@@ -111,16 +111,33 @@
       <p class="text-xl text-gray-600 mb-8 leading-relaxed max-w-3xl">{portfolio.about}</p>
       {#if portfolio.social_links}
         <div class="flex space-x-6">
-          {#each portfolio.social_links.split(',') as link}
-            <a href={link.trim()} 
-               target="_blank" 
+          {#if portfolio.social_links.linkedin}
+            <a href={portfolio.social_links.linkedin}
+               target="_blank"
+               rel="noopener noreferrer"
                class="hover-lift px-6 py-3 rounded-full text-white text-sm font-medium transition-all"
                style="background-color: {portfolio.theme_color}">
-              {link.includes('linkedin') ? 'LinkedIn' : 
-               link.includes('github') ? 'GitHub' : 
-               link.includes('twitter') ? 'Twitter' : 'Link'}
+              LinkedIn
             </a>
-          {/each}
+          {/if}
+          {#if portfolio.social_links.github}
+            <a href={portfolio.social_links.github}
+               target="_blank"
+               rel="noopener noreferrer"
+               class="hover-lift px-6 py-3 rounded-full text-white text-sm font-medium transition-all"
+               style="background-color: {portfolio.theme_color}">
+              GitHub
+            </a>
+          {/if}
+          {#if portfolio.social_links.twitter}
+            <a href={portfolio.social_links.twitter}
+               target="_blank"
+               rel="noopener noreferrer"
+               class="hover-lift px-6 py-3 rounded-full text-white text-sm font-medium transition-all"
+               style="background-color: {portfolio.theme_color}">
+              Twitter
+            </a>
+          {/if}
         </div>
       {/if}
     </section>

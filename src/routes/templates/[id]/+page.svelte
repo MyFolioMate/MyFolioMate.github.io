@@ -36,7 +36,11 @@
     design_template: $page.params.id,
     education: 'Bachelor in Computer Science\nMaster in Software Engineering',
     achievements: 'Best Developer Award 2023\nOpen Source Contributor',
-    social_links: 'github.com/johndoe, linkedin.com/in/johndoe'
+    social_links: {
+      github: 'https://github.com/johndoe',
+      linkedin: 'https://linkedin.com/in/johndoe',
+      twitter: 'https://twitter.com/johndoe'
+    }
   };
 
   const templates: Record<string, any> = {

@@ -96,17 +96,36 @@
       <!-- Social Links -->
       {#if portfolio.social_links}
         <div class="flex space-x-4 mb-8">
-          {#each portfolio.social_links.split(',') as link}
+          {#if portfolio.social_links.linkedin}
             <a 
-              href={link.trim()} 
-              target="_blank" 
+              href={portfolio.social_links.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
               class="text-gray-600 hover:text-black transition-colors"
             >
-              {link.includes('linkedin') ? 'LinkedIn' : 
-               link.includes('github') ? 'GitHub' : 
-               link.includes('twitter') ? 'Twitter' : 'Link'}
+              LinkedIn
             </a>
-          {/each}
+          {/if}
+          {#if portfolio.social_links.github}
+            <a 
+              href={portfolio.social_links.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-gray-600 hover:text-black transition-colors"
+            >
+              GitHub
+            </a>
+          {/if}
+          {#if portfolio.social_links.twitter}
+            <a 
+              href={portfolio.social_links.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-gray-600 hover:text-black transition-colors"
+            >
+              Twitter
+            </a>
+          {/if}
         </div>
       {/if}
     </header>

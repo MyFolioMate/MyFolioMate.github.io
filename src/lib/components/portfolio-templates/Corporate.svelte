@@ -50,18 +50,39 @@
           <p class="text-lg text-gray-600 mb-8">{portfolio.about}</p>
           {#if portfolio.social_links}
             <div class="flex space-x-4">
-              {#each portfolio.social_links.split(',') as link}
+              {#if portfolio.social_links.linkedin}
                 <a 
-                  href={link.trim()} 
-                  target="_blank" 
+                  href={portfolio.social_links.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   class="text-gray-600 hover:text-gray-900 transition-colors"
                   style="color: {portfolio.theme_color}"
                 >
-                  {link.includes('linkedin') ? 'LinkedIn' : 
-                   link.includes('github') ? 'GitHub' : 
-                   link.includes('twitter') ? 'Twitter' : 'Link'}
+                  LinkedIn
                 </a>
-              {/each}
+              {/if}
+              {#if portfolio.social_links.github}
+                <a 
+                  href={portfolio.social_links.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-gray-600 hover:text-gray-900 transition-colors"
+                  style="color: {portfolio.theme_color}"
+                >
+                  GitHub
+                </a>
+              {/if}
+              {#if portfolio.social_links.twitter}
+                <a 
+                  href={portfolio.social_links.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-gray-600 hover:text-gray-900 transition-colors"
+                  style="color: {portfolio.theme_color}"
+                >
+                  Twitter
+                </a>
+              {/if}
             </div>
           {/if}
         </div>
