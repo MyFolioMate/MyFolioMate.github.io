@@ -150,7 +150,7 @@
                   {skill.name}
                 </span>
                 {#if skill.description}
-                  <div class="absolute z-10 bottom-full mb-2 left-0 hidden group-hover:block bg-black text-white p-4 transform -rotate-1">
+                  <div class="absolute z-10 top-full mt-2 left-0 hidden group-hover:block bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-xl text-sm min-w-[200px]">
                     <p class="text-sm">{skill.description}</p>
                   </div>
                 {/if}

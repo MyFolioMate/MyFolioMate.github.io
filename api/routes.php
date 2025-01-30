@@ -14,6 +14,13 @@ require_once("./modules/Get.php");
 require_once("./modules/Post.php");
 require_once("./modules/Auth.php");
 
+// Initialize database connection
+$connection = new Connection();
+$pdo = $connection->connect();
+
+// Initialize Auth class
+$auth = new Auth($pdo);
+
 function encryptResponse($data) {
   global $auth;
   return $auth->encryptData($data);
@@ -124,35 +131,34 @@ try {
           echo encryptResponse(['success' => true]);
         break;
         case 'session-verify':
-          // Generate keys as before
-          $tempKey = random_bytes(32);
-          $iv = random_bytes(16);
-          $encrypted = openssl_encrypt(
-              $_ENV['ENCRYPTION_KEY'],
-              'AES-256-CBC',
-              $tempKey,
-              OPENSSL_RAW_DATA,
-              $iv
-          );
-
-          // Prepare response
-          $response = json_encode([
-              'success' => true,
-              'key' => base64_encode($encrypted),
-              'token' => base64_encode($tempKey),
-              'iv' => base64_encode($iv)
-          ]);
-
-          // Obfuscate the response
-          $bytes = unpack('C*', $response);
-          $mask = [0x5A, 0xF3, 0xE2, 0x1D];
-          
-          for ($i = 1; $i <= count($bytes); $i++) {
-              $bytes[$i] ^= $mask[($i - 1) % count($mask)];
+          try {
+              // Generate random key and IV for session
+              $iv = openssl_random_pseudo_bytes(16);
+              $token = openssl_random_pseudo_bytes(32);
+              
+              // Encrypt the encryption key
+              $encryptedKey = openssl_encrypt(
+                  $_ENV['ENCRYPTION_KEY'],
+                  'AES-256-CBC',
+                  $token,
+                  OPENSSL_RAW_DATA,
+                  $iv
+              );
+              
+              // Return the encrypted key directly without obfuscation
+              // Previously obfuscated response:
+              // $response = obfuscateResponse(json_encode([
+              echo json_encode([
+                  'success' => true,
+                  'key' => base64_encode($encryptedKey),
+                  'token' => base64_encode($token),
+                  'iv' => base64_encode($iv)
+              ]);
+              
+          } catch (Exception $e) {
+              http_response_code(500);
+              echo json_encode(['error' => 'Failed to verify session']);
           }
-          
-          header('Content-Type: application/octet-stream');
-          echo pack('C*', ...$bytes);
           break;
         default:
           echo encryptResponse(["error" => "No public API available"]);

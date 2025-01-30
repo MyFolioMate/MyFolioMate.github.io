@@ -15,11 +15,7 @@ async function getEncryptionKey() {
                 throw new Error('Failed to get encryption key');
             }
 
-            const buffer = await response.arrayBuffer();
-            const bytes = new Uint8Array(buffer);
-            
-            const deobfuscated = deobfuscateResponse(bytes);
-            const data = JSON.parse(new TextDecoder().decode(deobfuscated));
+            const data = await response.json();
             
             if (!data.success || !data.key || !data.token || !data.iv) {
                 throw new Error('Invalid key response');
@@ -53,17 +49,6 @@ async function getEncryptionKey() {
         }
     }
     return ENCRYPTION_KEY;
-}
-
-function deobfuscateResponse(bytes: Uint8Array): Uint8Array {
-    const mask = new Uint8Array([0x5A, 0xF3, 0xE2, 0x1D]);
-    const result = new Uint8Array(bytes.length);
-    
-    for (let i = 0; i < bytes.length; i++) {
-        result[i] = bytes[i] ^ mask[i % mask.length];
-    }
-    
-    return result;
 }
 
 // Convert string to Uint8Array for crypto operations

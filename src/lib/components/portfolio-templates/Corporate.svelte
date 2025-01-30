@@ -119,7 +119,7 @@
                       {skill.name}
                     </span>
                     {#if skill.description}
-                      <div class="absolute z-10 bottom-full mb-2 left-0 hidden group-hover:block bg-white p-4 rounded-lg shadow-lg text-sm min-w-[200px] border border-gray-100">
+                      <div class="absolute z-10 top-full mt-2 left-0 hidden group-hover:block bg-white p-4 rounded-lg shadow-xl text-sm min-w-[200px]">
                         <p class="text-gray-700">{skill.description}</p>
                         <div class="absolute bottom-[-6px] left-4 w-3 h-3 bg-white border-r border-b border-gray-100 transform rotate-45"></div>
                       </div>

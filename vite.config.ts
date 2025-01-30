@@ -6,7 +6,8 @@ export default defineConfig(({ mode }) => ({
 	server: {
 		proxy: mode === 'development' ? {
 			'/api': {
-				target: 'https://formalytics.me/api-myfolio/',
+				// target: 'https://formalytics.me/api-myfolio/',
+				target: 'http://localhost/myfoliomate.github.io/api/',
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/api/, ''),
 				secure: true

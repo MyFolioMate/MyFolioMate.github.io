@@ -74,6 +74,33 @@
       opacity: 1;
     }
   }
+
+  .skill-item {
+    position: relative;
+    z-index: 1;
+  }
+
+  .skill-details {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background: white;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 10;
+    transform: translateY(100%);
+    margin-bottom: 0.5rem;
+  }
+
+  .skill-item:hover .skill-details {
+    opacity: 1;
+    visibility: visible;
+  }
 </style>
 
 <svelte:head>

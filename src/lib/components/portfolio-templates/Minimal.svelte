@@ -98,7 +98,7 @@
                   {skill.name}
                 </span>
                 {#if skill.description}
-                  <div class="absolute z-10 bottom-full mb-2 left-0 hidden group-hover:block bg-white border border-gray-100 p-3 text-sm min-w-[200px]">
+                  <div class="absolute z-10 top-full mt-2 left-0 hidden group-hover:block bg-white p-3 rounded-md shadow-lg text-sm min-w-[180px]">
                     <p class="text-gray-600">{skill.description}</p>
                   </div>
                 {/if}

@@ -1,8 +1,13 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->load();
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+    $dotenv->load();
+} catch (Exception $e) {
+    error_log("Error loading .env file: " . $e->getMessage());
+    throw $e;
+}
 
 class Connection {
     private $host;
@@ -16,9 +21,17 @@ class Connection {
         $this->user = $_ENV['DB_USER'] ?? null;
         $this->pass = $_ENV['DB_PASS'] ?? null;
         
+        // Debug information
+        error_log("DB Config - Host: " . ($this->host ?? 'null'));
+        error_log("DB Config - Name: " . ($this->dbname ?? 'null'));
+        error_log("DB Config - User: " . ($this->user ?? 'null'));
+        
         // Validate configuration
-        if (!$this->host || !$this->dbname || !$this->user || !$this->pass) {
-            throw new Exception("Missing database configuration. Please check your .env file.");
+        if (!$this->host || !$this->dbname || !$this->user) {
+            throw new Exception("Missing database configuration. Please check your .env file. Values: " . 
+                              "HOST=" . ($this->host ?? 'null') . ", " .
+                              "DB=" . ($this->dbname ?? 'null') . ", " .
+                              "USER=" . ($this->user ?? 'null'));
         }
     }
 
